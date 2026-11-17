@@ -7,8 +7,8 @@ function AdminLoginInner() {
   const location = useLocation();
   const { adminUser, adminLogin } = useAdmin();
 
-  const [username, setUsername] = useState('admin@leafinlifehealthcare.com');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,7 +18,7 @@ function AdminLoginInner() {
     navigate('/admin', { replace: true });
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -28,7 +28,7 @@ function AdminLoginInner() {
     }
 
     setIsSubmitting(true);
-    const result = adminLogin(username.trim(), password);
+    const result = await adminLogin(username.trim(), password);
     setIsSubmitting(false);
 
     if (result.success) {
@@ -53,18 +53,6 @@ function AdminLoginInner() {
           <p className="text-xs text-stone-500 mt-2">
             Secure administrative control panel for Leaf In Life Healthcare
           </p>
-        </div>
-
-        {/* Demo Credentials Helper Pill */}
-        <div className="mb-6 p-3 bg-amber-50/80 border border-amber-200/80 rounded-md text-xs text-amber-800 flex items-start space-x-2">
-          <svg className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div className="text-[11px] leading-relaxed">
-            <p className="font-semibold mb-0.5">Quick Login Credentials:</p>
-            <p>User: <span className="font-mono font-medium">admin@leafinlifehealthcare.com</span></p>
-            <p>Password: <span className="font-mono font-medium">admin123</span></p>
-          </div>
         </div>
 
         {errorMsg && (

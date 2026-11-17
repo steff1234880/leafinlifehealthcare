@@ -11,7 +11,7 @@ class UserStore {
     // Seed default demo user with bcrypt hashed password: "Password123!"
     // Generated via bcrypt.hashSync('Password123!', 10)
     const demoHashedPassword =
-      '$2b$10$gb22NtDXTN9rV78HAx/ke.P7PZORsUh/184T4enLixsR0wz5iTroe';
+      bcrypt.hashSync('Password123!', 10);
 
     this.users.set('demo@leafinlifehealthcare.com', {
       id: 'usr_demo_1',
@@ -35,6 +35,30 @@ class UserStore {
       isActive: true,
       createdAt: new Date().toISOString(),
     });
+  }
+
+  seedAdmin({ email, password, name, phone }) {
+    const cleanEmail = email.trim().toLowerCase();
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const existing = this.users.get(cleanEmail);
+    if (existing) {
+      existing.password = hashedPassword;
+      existing.role = 'admin';
+      existing.isActive = true;
+      if (name) existing.name = name;
+      if (phone) existing.phone = phone;
+    } else {
+      this.users.set(cleanEmail, {
+        id: `usr_admin_${Date.now()}`,
+        name: name || 'Leaf In Life Administrator',
+        email: cleanEmail,
+        phone: phone || '9876543211',
+        password: hashedPassword,
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      });
+    }
   }
 
   findByEmail(email) {

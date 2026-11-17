@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { connectDB, getDbConnectionStatus } from './config/db.js';
+import { seedAdminUser } from './config/seedAdmin.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
@@ -18,8 +19,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB & Seed Admin
+connectDB().then(() => {
+  seedAdminUser();
+});
 
 // Dynamic CORS configuration supporting Vite dev server, preview, and Cloudflare Tunnels
 const allowedOrigins = process.env.CLIENT_URL
