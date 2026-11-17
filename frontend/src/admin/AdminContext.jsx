@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { adminService, productService } from '../services/api';
 import apiClient from '../services/apiClient';
 
@@ -279,6 +279,20 @@ export function AdminProvider({ children }) {
     }
   };
 
+  // Order cancellation
+  const cancelOrder = async (orderId, reason = 'Cancelled by administrator') => {
+    try {
+      const { data } = await apiClient.patch(`/orders/${orderId}/cancel`, { reason });
+      setOrders((prev) =>
+        prev.map((o) => (o.orderId === orderId ? { ...o, orderStatus: 'Cancelled', cancellationReason: reason } : o))
+      );
+      return data.order || data;
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+      throw err;
+    }
+  };
+
   // Image Upload helper
   const uploadProductImage = async (files) => {
     const formData = new FormData();
@@ -291,6 +305,26 @@ export function AdminProvider({ children }) {
     return res.urls || [];
   };
 
+  // Computed metrics with fallback if API dashboardStats is pending or loading
+  const metrics = useMemo(() => {
+    const stats = dashboardStats?.stats;
+    const computedSales = orders
+      .filter((o) => o.paymentStatus === 'Completed' || o.orderStatus === 'Delivered')
+      .reduce((sum, o) => sum + (Number(o.pricing?.grandTotal) || 0), 0);
+
+    const lowStock = products.filter((p) => (Number(p.stock) || 0) <= 10).length;
+
+    return {
+      totalSales: stats?.totalRevenue !== undefined ? stats.totalRevenue : computedSales,
+      totalOrders: stats?.totalOrders !== undefined ? stats.totalOrders : orders.length,
+      totalProducts: stats?.totalProducts !== undefined ? stats.totalProducts : products.length,
+      totalCustomers: stats?.totalCustomers !== undefined ? stats.totalCustomers : customers.length,
+      pendingOrders: stats?.pendingOrders !== undefined ? stats.pendingOrders : orders.filter((o) => o.orderStatus === 'Pending').length,
+      deliveredOrders: stats?.deliveredOrders !== undefined ? stats.deliveredOrders : orders.filter((o) => o.orderStatus === 'Delivered').length,
+      lowStockCount: lowStock,
+    };
+  }, [dashboardStats, orders, products, customers]);
+
   return (
     <AdminContext.Provider
       value={{
@@ -298,6 +332,8 @@ export function AdminProvider({ children }) {
         isAuthenticated: Boolean(adminUser),
         adminLogin,
         adminLogout,
+        metrics,
+        cancelOrder,
         products,
         loadingProducts,
         addProduct,

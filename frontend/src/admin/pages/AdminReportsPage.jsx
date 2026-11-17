@@ -2,7 +2,16 @@ import React, { useState } from 'react';
 import { useAdmin } from '../AdminContext';
 
 export default function AdminReportsPage() {
-  const { orders, products, metrics } = useAdmin();
+  const { orders = [], products = [], metrics = {} } = useAdmin();
+
+  const safeMetrics = {
+    totalSales: metrics?.totalSales || 0,
+    totalOrders: metrics?.totalOrders || 0,
+    totalProducts: metrics?.totalProducts || 0,
+    totalCustomers: metrics?.totalCustomers || 0,
+    lowStockCount: metrics?.lowStockCount || 0,
+    ...metrics,
+  };
 
   const [timeframe, setTimeframe] = useState('all'); // 'all', 'month', 'week'
 
@@ -111,7 +120,7 @@ export default function AdminReportsPage() {
         <div className="bg-white border border-[#e5e5e5] rounded-xl p-5 shadow-xs">
           <p className="text-xs uppercase font-semibold text-stone-500 tracking-wider">Gross Sales</p>
           <h3 className="text-2xl font-bold font-heading text-stone-900 mt-1">
-            {formatPrice(metrics.totalSales)}
+            {formatPrice(safeMetrics.totalSales)}
           </h3>
           <p className="text-[11px] text-emerald-600 font-semibold mt-1">↑ 18.4% from last period</p>
         </div>
@@ -119,17 +128,17 @@ export default function AdminReportsPage() {
         <div className="bg-white border border-[#e5e5e5] rounded-xl p-5 shadow-xs">
           <p className="text-xs uppercase font-semibold text-stone-500 tracking-wider">Average Order Value (AOV)</p>
           <h3 className="text-2xl font-bold font-heading text-stone-900 mt-1">
-            {formatPrice(metrics.totalOrders > 0 ? metrics.totalSales / metrics.totalOrders : 0)}
+            {formatPrice(safeMetrics.totalOrders > 0 ? safeMetrics.totalSales / safeMetrics.totalOrders : 0)}
           </h3>
-          <p className="text-[11px] text-stone-500 mt-1">Based on {metrics.totalOrders} total orders</p>
+          <p className="text-[11px] text-stone-500 mt-1">Based on {safeMetrics.totalOrders} total orders</p>
         </div>
 
         <div className="bg-white border border-[#e5e5e5] rounded-xl p-5 shadow-xs">
           <p className="text-xs uppercase font-semibold text-stone-500 tracking-wider">Fulfilled Orders Ratio</p>
           <h3 className="text-2xl font-bold font-heading text-stone-900 mt-1">
-            {metrics.totalOrders > 0
+            {safeMetrics.totalOrders > 0
               ? `${Math.round(
-                  (orders.filter((o) => o.orderStatus === 'Delivered').length / metrics.totalOrders) * 100
+                  (orders.filter((o) => o.orderStatus === 'Delivered').length / safeMetrics.totalOrders) * 100
                 )}%`
               : '0%'}
           </h3>
@@ -215,8 +224,8 @@ export default function AdminReportsPage() {
                   className="h-full bg-[#586c38] rounded-full"
                   style={{
                     width: `${
-                      metrics.totalSales > 0
-                        ? (paymentBreakdown.onlineRevenue / metrics.totalSales) * 100
+                      safeMetrics.totalSales > 0
+                        ? (paymentBreakdown.onlineRevenue / safeMetrics.totalSales) * 100
                         : 50
                     }%`,
                   }}
@@ -235,8 +244,8 @@ export default function AdminReportsPage() {
                   className="h-full bg-amber-600 rounded-full"
                   style={{
                     width: `${
-                      metrics.totalSales > 0
-                        ? (paymentBreakdown.codRevenue / metrics.totalSales) * 100
+                      safeMetrics.totalSales > 0
+                        ? (paymentBreakdown.codRevenue / safeMetrics.totalSales) * 100
                         : 50
                     }%`,
                   }}

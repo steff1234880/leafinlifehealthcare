@@ -64,10 +64,6 @@ function AdminLayoutInner() {
 }
 
 export default function AdminLayout() {
-  return (
-    <AdminProvider>
-      <AdminLayoutInner />
-    </AdminProvider>
-  );
+  return <AdminLayoutInner />;
 }
 

@@ -3,7 +3,16 @@ import { Link } from 'react-router-dom';
 import { useAdmin } from '../AdminContext';
 
 export default function AdminDashboardPage() {
-  const { metrics, orders, products } = useAdmin();
+  const { metrics = {}, orders = [], products = [] } = useAdmin();
+
+  const safeMetrics = {
+    totalSales: metrics?.totalSales || 0,
+    totalOrders: metrics?.totalOrders || 0,
+    totalProducts: metrics?.totalProducts || 0,
+    totalCustomers: metrics?.totalCustomers || 0,
+    lowStockCount: metrics?.lowStockCount || 0,
+    ...metrics,
+  };
 
   const formatPrice = (amount) => {
     return `Rs. ${Number(amount || 0).toLocaleString('en-IN', {
@@ -15,7 +24,7 @@ export default function AdminDashboardPage() {
   const statCards = [
     {
       title: 'Total Sales',
-      value: formatPrice(metrics.totalSales),
+      value: formatPrice(safeMetrics.totalSales),
       subtitle: 'Net confirmed revenue',
       icon: (
         <svg className="w-6 h-6 text-[#586c38]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,8 +35,8 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'Total Orders',
-      value: metrics.totalOrders,
-      subtitle: `${orders.filter((o) => o.orderStatus === 'Delivered').length} delivered successfully`,
+      value: safeMetrics.totalOrders,
+      subtitle: `${(orders || []).filter((o) => o?.orderStatus === 'Delivered').length} delivered successfully`,
       icon: (
         <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -37,8 +46,8 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'Active Products',
-      value: metrics.totalProducts,
-      subtitle: `${metrics.lowStockCount} items low stock`,
+      value: safeMetrics.totalProducts,
+      subtitle: `${safeMetrics.lowStockCount} items low stock`,
       icon: (
         <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -48,7 +57,7 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'Registered Customers',
-      value: metrics.totalCustomers,
+      value: safeMetrics.totalCustomers,
       subtitle: 'Active wellness buyers',
       icon: (
         <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

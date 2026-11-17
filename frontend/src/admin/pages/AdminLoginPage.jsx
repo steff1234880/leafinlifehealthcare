@@ -131,10 +131,6 @@ function AdminLoginInner() {
 }
 
 export default function AdminLoginPage() {
-  return (
-    <AdminProvider>
-      <AdminLoginInner />
-    </AdminProvider>
-  );
+  return <AdminLoginInner />;
 }
 
