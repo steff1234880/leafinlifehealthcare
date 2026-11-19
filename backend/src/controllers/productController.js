@@ -169,7 +169,7 @@ export const getProductById = async (req, res, next) => {
  */
 export const createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, discountPrice, category, stock, sku, status } = req.body;
+    const { name, description, price, discountPrice, comparePrice, category, stock, sku, status } = req.body;
 
     // Process uploaded files if multipart/form-data was used
     let imageUrls = [];
@@ -236,6 +236,9 @@ export const createProduct = async (req, res, next) => {
         description: description || '',
         price: Number(price),
         discountPrice: discountPrice ? Number(discountPrice) : null,
+        comparePrice: comparePrice !== undefined && comparePrice !== null && comparePrice !== ''
+          ? Number(comparePrice)
+          : (discountPrice ? Number(price) : null),
         images: imageUrls,
         category: category.trim(),
         stock: stock !== undefined ? Number(stock) : 0,
@@ -256,6 +259,7 @@ export const createProduct = async (req, res, next) => {
       description,
       price,
       discountPrice,
+      comparePrice,
       images: imageUrls,
       category,
       stock,
@@ -349,7 +353,7 @@ export const deleteImage = async (req, res, next) => {
 export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, slug, description, price, discountPrice, category, stock, sku, status } = req.body;
+    const { name, slug, description, price, discountPrice, comparePrice, category, stock, sku, status } = req.body;
 
     // Check if new images were uploaded in multipart form
     let newImages = undefined;
@@ -399,6 +403,7 @@ export const updateProduct = async (req, res, next) => {
       if (description !== undefined) product.description = description;
       if (price !== undefined) product.price = Number(price);
       if (discountPrice !== undefined) product.discountPrice = discountPrice ? Number(discountPrice) : null;
+      if (comparePrice !== undefined) product.comparePrice = comparePrice ? Number(comparePrice) : null;
       if (newImages !== undefined) product.images = newImages;
       if (category !== undefined) product.category = category.trim();
       if (stock !== undefined) product.stock = Number(stock);
@@ -419,6 +424,7 @@ export const updateProduct = async (req, res, next) => {
       description,
       price,
       discountPrice,
+      comparePrice,
       images: newImages,
       category,
       stock,

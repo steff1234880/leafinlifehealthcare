@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { adminService, productService } from '../services/api';
 import apiClient from '../services/apiClient';
+import { getProductImageUrl } from '../utils/imageUtils';
 
 const AdminContext = createContext(null);
 
@@ -36,18 +37,27 @@ export function AdminProvider({ children }) {
     try {
       const res = await adminService.getAdminProducts({ limit: 100 });
       const list = res.products || (Array.isArray(res) ? res : []);
-      const mapped = list.map((p) => ({
-        ...p,
-        _id: p._id || p.id,
-        id: p._id || p.id,
-        title: p.name || p.title,
-        price: p.discountPrice || p.price,
-        comparePrice: p.discountPrice ? p.price : undefined,
-        primaryImage: (p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg',
-        stock: p.stock !== undefined ? p.stock : 50,
-        sku: p.sku || `LIL-${p._id}`,
-        status: p.status || 'active',
-      }));
+      const mapped = list.map((p) => {
+        const rawPrimary = (p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg';
+        const sellingPrice = p.price;
+        const compareAtPrice = p.comparePrice !== undefined && p.comparePrice !== null
+          ? p.comparePrice
+          : (p.discountPrice && p.discountPrice < p.price ? p.price : undefined);
+
+        return {
+          ...p,
+          _id: p._id || p.id,
+          id: p._id || p.id,
+          title: p.name || p.title,
+          price: sellingPrice,
+          comparePrice: compareAtPrice,
+          primaryImage: getProductImageUrl(rawPrimary),
+          stock: p.stock !== undefined ? p.stock : 0,
+          inStock: Number(p.stock) > 0,
+          sku: p.sku || `LIL-${p._id}`,
+          status: p.status || 'active',
+        };
+      });
       setProducts(mapped);
     } catch (err) {
       console.error('Failed to load admin products:', err);
@@ -169,17 +179,34 @@ export function AdminProvider({ children }) {
   };
 
   // Product CRUD
-  const addProduct = async (productData) => {
+  const addProduct = async (productData, imageFile = null) => {
     try {
+      let finalImages = productData.images;
+
+      // If a new image File was selected, upload it first
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('images', imageFile);
+        const uploadRes = await adminService.uploadImages(formData);
+        if (uploadRes?.urls && uploadRes.urls.length > 0) {
+          finalImages = uploadRes.urls;
+        }
+      }
+
+      if (!finalImages || finalImages.length === 0) {
+        finalImages = [productData.primaryImage || '/assets/images/prod-p2.jpg'];
+      }
+
       const created = await adminService.createProduct({
         name: productData.title || productData.name,
         description: productData.description || '',
         price: Number(productData.price) || 0,
         discountPrice: productData.comparePrice ? Number(productData.price) : undefined,
+        comparePrice: productData.comparePrice ? Number(productData.comparePrice) : null,
         category: productData.category || 'Ayurvedic Drops',
         stock: Number(productData.stock) || 0,
         sku: productData.sku || `SKU-LIL-${Date.now().toString().slice(-4)}`,
-        images: productData.images || [productData.primaryImage || '/assets/images/prod-p2.jpg'],
+        images: finalImages,
         status: 'active',
       });
       await loadProducts();
@@ -190,18 +217,45 @@ export function AdminProvider({ children }) {
     }
   };
 
-  const editProduct = async (id, updatedFields) => {
+  const editProduct = async (id, updatedFields, imageFile = null) => {
     try {
-      const updated = await adminService.updateProduct(id, {
+      let finalImages = updatedFields.images;
+
+      // If a new image File was selected, upload it first
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('images', imageFile);
+        const uploadRes = await adminService.uploadImages(formData);
+        if (uploadRes?.urls && uploadRes.urls.length > 0) {
+          finalImages = uploadRes.urls;
+        }
+      }
+
+      // If neither a new file was uploaded nor updatedFields.images was provided,
+      // but updatedFields.primaryImage is explicitly set to a custom URL, use it
+      if (!finalImages && updatedFields.primaryImage) {
+        finalImages = [updatedFields.primaryImage];
+      }
+
+      const updatePayload = {
         name: updatedFields.title || updatedFields.name,
         description: updatedFields.description,
         price: updatedFields.price !== undefined ? Number(updatedFields.price) : undefined,
+        comparePrice: updatedFields.comparePrice !== undefined
+          ? (updatedFields.comparePrice ? Number(updatedFields.comparePrice) : null)
+          : undefined,
         stock: updatedFields.stock !== undefined ? Number(updatedFields.stock) : undefined,
         category: updatedFields.category,
         sku: updatedFields.sku,
-        images: updatedFields.images,
         status: updatedFields.status,
-      });
+      };
+
+      // Only pass images if a new image was uploaded or provided, preserving existing otherwise
+      if (finalImages !== undefined && finalImages.length > 0) {
+        updatePayload.images = finalImages;
+      }
+
+      const updated = await adminService.updateProduct(id, updatePayload);
       await loadProducts();
       return updated;
     } catch (err) {

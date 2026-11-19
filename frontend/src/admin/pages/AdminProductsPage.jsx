@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../AdminContext';
+import { getProductImageUrl } from '../../utils/imageUtils';
 
 export default function AdminProductsPage() {
   const { products, categories, addProduct, editProduct, deleteProduct } = useAdmin();
@@ -11,6 +12,10 @@ export default function AdminProductsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     category: 'ayurvedic-medicine',
@@ -21,6 +26,15 @@ export default function AdminProductsPage() {
     description: '',
     primaryImage: '/assets/images/products/product-1.jpg',
   });
+
+  // Clean up Object URL when component unmounts or image changes
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   // Filtered products
   const filteredProducts = products.filter((p) => {
@@ -38,7 +52,13 @@ export default function AdminProductsPage() {
 
   // Open modal for Create
   const handleOpenCreate = () => {
+    if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
     setEditingProductId(null);
+    setSelectedImageFile(null);
+    setImagePreviewUrl('');
+    setFormError('');
     setFormData({
       title: '',
       category: categories[0]?.slug || 'ayurvedic-medicine',
@@ -54,7 +74,14 @@ export default function AdminProductsPage() {
 
   // Open modal for Edit
   const handleOpenEdit = (product) => {
+    if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
     setEditingProductId(product._id);
+    setSelectedImageFile(null);
+    const existingImg = product.primaryImage || (product.images && product.images[0]) || '/assets/images/products/product-1.jpg';
+    setImagePreviewUrl(getProductImageUrl(existingImg));
+    setFormError('');
     setFormData({
       title: product.title || '',
       category: product.category || categories[0]?.slug || 'ayurvedic-medicine',
@@ -63,56 +90,89 @@ export default function AdminProductsPage() {
       stock: product.stock ?? 30,
       shortDescription: product.shortDescription || '',
       description: product.description || '',
-      primaryImage: product.primaryImage || '/assets/images/products/product-1.jpg',
+      primaryImage: existingImg,
     });
     setIsModalOpen(true);
   };
 
-  // Image upload simulator (reads file via FileReader data URL)
+  // Image upload handler with immediate URL.createObjectURL preview
   const handleImageFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, primaryImage: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type.toLowerCase())) {
+        setFormError('Please select a valid image file (JPG, PNG, or WEBP).');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setFormError('Image size exceeds 5MB limit. Please choose a smaller image.');
+        return;
+      }
+
+      setFormError('');
+      // Revoke previous blob preview to prevent memory leaks
+      if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+
+      setSelectedImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreviewUrl(previewUrl);
     }
   };
 
   // Submit form
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setFormError('');
+
     if (!formData.title.trim() || !formData.price) {
-      alert('Product title and price are required.');
+      setFormError('Product title and price are required.');
       return;
     }
 
-    if (editingProductId) {
-      editProduct(editingProductId, {
-        title: formData.title.trim(),
-        category: formData.category,
-        price: Number(formData.price),
-        comparePrice: Number(formData.comparePrice) || null,
-        stock: Number(formData.stock) || 0,
-        shortDescription: formData.shortDescription,
-        description: formData.description,
-        primaryImage: formData.primaryImage,
-      });
-    } else {
-      addProduct({
-        title: formData.title.trim(),
-        category: formData.category,
-        price: Number(formData.price),
-        comparePrice: Number(formData.comparePrice) || null,
-        stock: Number(formData.stock) || 0,
-        shortDescription: formData.shortDescription,
-        description: formData.description,
-        primaryImage: formData.primaryImage,
-      });
-    }
+    setIsSubmitting(true);
+    try {
+      if (editingProductId) {
+        await editProduct(
+          editingProductId,
+          {
+            title: formData.title.trim(),
+            category: formData.category,
+            price: Number(formData.price),
+            comparePrice: Number(formData.comparePrice) || null,
+            stock: Number(formData.stock) || 0,
+            shortDescription: formData.shortDescription,
+            description: formData.description,
+            // If user did not pick a new file and manually changed URL:
+            primaryImage: selectedImageFile ? undefined : formData.primaryImage,
+          },
+          selectedImageFile
+        );
+      } else {
+        await addProduct(
+          {
+            title: formData.title.trim(),
+            category: formData.category,
+            price: Number(formData.price),
+            comparePrice: Number(formData.comparePrice) || null,
+            stock: Number(formData.stock) || 0,
+            shortDescription: formData.shortDescription,
+            description: formData.description,
+            primaryImage: formData.primaryImage,
+          },
+          selectedImageFile
+        );
+      }
 
-    setIsModalOpen(false);
+      setIsModalOpen(false);
+    } catch (err) {
+      setFormError(err.response?.data?.message || err.message || 'Failed to save product. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = (id, title) => {
@@ -201,7 +261,7 @@ export default function AdminProductsPage() {
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-3">
                         <img
-                          src={p.primaryImage}
+                          src={getProductImageUrl(p.primaryImage)}
                           alt={p.title}
                           className="w-12 h-12 object-cover rounded border border-stone-200 shrink-0 bg-stone-50"
                         />
@@ -238,15 +298,20 @@ export default function AdminProductsPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          p.availability === 'in_stock'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
-                        }`}
-                      >
-                        {p.availability === 'in_stock' ? 'In Stock' : 'Out of Stock'}
-                      </span>
+                      {(() => {
+                        const inStock = Number(p.stock) > 0;
+                        return (
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              inStock
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}
+                          >
+                            {inStock ? 'In Stock' : 'Out of Stock'}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="py-3 px-4 text-right space-x-2">
                       <button
@@ -292,6 +357,15 @@ export default function AdminProductsPage() {
                 ✕
               </button>
             </div>
+
+            {formError && (
+              <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-600 text-xs flex items-center">
+                <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{formError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
               <div>
@@ -379,24 +453,46 @@ export default function AdminProductsPage() {
                 </label>
                 <div className="flex items-center space-x-4">
                   <img
-                    src={formData.primaryImage}
+                    src={imagePreviewUrl || getProductImageUrl(formData.primaryImage)}
                     alt="Preview"
                     className="w-16 h-16 object-cover rounded border border-stone-300 bg-stone-50"
                   />
                   <div className="flex-1">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
                       onChange={handleImageFileChange}
                       className="block w-full text-xs text-stone-500 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#f9f9eb] file:text-[#2f3e10] hover:file:bg-[#ececb5] cursor-pointer"
                     />
                     <input
                       type="text"
                       placeholder="Or enter image URL"
-                      value={formData.primaryImage}
-                      onChange={(e) => setFormData({ ...formData, primaryImage: e.target.value })}
-                      className="mt-2 w-full h-8 px-2.5 border border-stone-300 rounded text-[11px] focus:outline-none focus:border-[#586c38]"
+                      value={selectedImageFile ? '' : formData.primaryImage}
+                      disabled={Boolean(selectedImageFile)}
+                      onChange={(e) => {
+                        setFormData({ ...formData, primaryImage: e.target.value });
+                        setImagePreviewUrl(getProductImageUrl(e.target.value));
+                      }}
+                      className="mt-2 w-full h-8 px-2.5 border border-stone-300 rounded text-[11px] focus:outline-none focus:border-[#586c38] disabled:bg-stone-100 disabled:text-stone-400"
                     />
+                    {selectedImageFile && (
+                      <div className="flex items-center justify-between mt-1 text-[11px] text-emerald-700">
+                        <span>Selected file: {selectedImageFile.name} ({(selectedImageFile.size / 1024).toFixed(1)} KB)</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+                              URL.revokeObjectURL(imagePreviewUrl);
+                            }
+                            setSelectedImageFile(null);
+                            setImagePreviewUrl(getProductImageUrl(formData.primaryImage));
+                          }}
+                          className="text-red-500 hover:underline cursor-pointer ml-2"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -424,9 +520,16 @@ export default function AdminProductsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#2f3e10] hover:bg-[#586c38] text-white rounded text-xs font-semibold uppercase tracking-wider transition"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-[#2f3e10] hover:bg-[#586c38] text-white rounded text-xs font-semibold uppercase tracking-wider transition disabled:opacity-60 cursor-pointer"
                 >
-                  {editingProductId ? 'Update Product' : 'Save Product'}
+                  {isSubmitting
+                    ? selectedImageFile
+                      ? 'Uploading & Saving...'
+                      : 'Saving...'
+                    : editingProductId
+                    ? 'Update Product'
+                    : 'Save Product'}
                 </button>
               </div>
             </form>

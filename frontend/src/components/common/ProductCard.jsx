@@ -21,8 +21,22 @@ export default function ProductCard({
 
   const displayPrimaryImage = hoverImageOverride || product.primaryImage;
   const displayPrice = selectedVariant
-    ? selectedVariant.formattedPrice
-    : product.formattedPrice;
+    ? (selectedVariant.formattedPrice || `Rs. ${Number(selectedVariant.price).toFixed(2)}`)
+    : (product.formattedPrice || `Rs. ${Number(product.price).toFixed(2)}`);
+
+  const rawSellingPrice = selectedVariant ? Number(selectedVariant.price) : Number(product.price);
+  const rawComparePrice = selectedVariant
+    ? (selectedVariant.comparePrice || selectedVariant.originalPrice)
+    : (product.comparePrice || product.originalPrice);
+
+  const hasDiscount = rawComparePrice && Number(rawComparePrice) > rawSellingPrice;
+  const displayComparePrice = hasDiscount
+    ? (selectedVariant?.formattedComparePrice || product.formattedComparePrice || `Rs. ${Number(rawComparePrice).toFixed(2)}`)
+    : null;
+
+  const discountPercent = hasDiscount
+    ? Math.round(((Number(rawComparePrice) - rawSellingPrice) / Number(rawComparePrice)) * 100)
+    : null;
 
   const handleVariantClick = (e, variant) => {
     e.preventDefault();
@@ -147,8 +161,18 @@ export default function ProductCard({
           </h3>
 
           {/* Price */}
-          <div className="mb-[1rem] font-body text-[1.6rem] sm:text-[1.8rem] font-light text-black">
-            <span>{displayPrice}</span>
+          <div className="mb-[1rem] font-body text-[1.6rem] sm:text-[1.8rem] flex items-center justify-center flex-wrap gap-[0.8rem]">
+            <span className="font-medium text-black">{displayPrice}</span>
+            {displayComparePrice && (
+              <span className="text-[1.4rem] sm:text-[1.5rem] text-stone-400 line-through font-normal">
+                {displayComparePrice}
+              </span>
+            )}
+            {discountPercent && (
+              <span className="inline-block px-[6px] py-[1px] text-[1.1rem] font-bold rounded bg-[#fef9ea] text-[#586c38] border border-[#586c38]/30">
+                {discountPercent}% OFF
+              </span>
+            )}
           </div>
 
           {/* List View Description Excerpt */}

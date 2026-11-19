@@ -22,8 +22,22 @@ export default function QuickAddModal() {
   if (!quickViewProduct) return null;
 
   const currentPrice = selectedVariant
-    ? selectedVariant.formattedPrice
-    : quickViewProduct.formattedPrice;
+    ? (selectedVariant.formattedPrice || `Rs. ${Number(selectedVariant.price).toFixed(2)}`)
+    : (quickViewProduct.formattedPrice || `Rs. ${Number(quickViewProduct.price).toFixed(2)}`);
+
+  const rawSelling = selectedVariant ? Number(selectedVariant.price) : Number(quickViewProduct.price);
+  const rawCompare = selectedVariant
+    ? (selectedVariant.comparePrice || selectedVariant.originalPrice)
+    : (quickViewProduct.comparePrice || quickViewProduct.originalPrice);
+
+  const hasDiscount = rawCompare && Number(rawCompare) > rawSelling;
+  const currentComparePrice = hasDiscount
+    ? (selectedVariant?.formattedComparePrice || quickViewProduct.formattedComparePrice || `Rs. ${Number(rawCompare).toFixed(2)}`)
+    : null;
+
+  const discountPercent = hasDiscount
+    ? Math.round(((Number(rawCompare) - rawSelling) / Number(rawCompare)) * 100)
+    : null;
 
   const currentImage =
     selectedVariant && selectedVariant.image
@@ -78,8 +92,18 @@ export default function QuickAddModal() {
             </h2>
           </Link>
 
-          <div className="mt-[1.2rem] mb-[1.6rem] text-[1.8rem] font-body font-light text-black">
-            {currentPrice}
+          <div className="mt-[1.2rem] mb-[1.6rem] text-[1.8rem] font-body flex items-center flex-wrap gap-[1rem]">
+            <span className="font-medium text-black">{currentPrice}</span>
+            {currentComparePrice && (
+              <span className="text-[1.5rem] text-stone-400 line-through">
+                {currentComparePrice}
+              </span>
+            )}
+            {discountPercent && (
+              <span className="inline-block px-[8px] py-[2px] text-[1.2rem] font-bold rounded bg-[#fef9ea] text-[#586c38] border border-[#586c38]/30">
+                {discountPercent}% OFF
+              </span>
+            )}
           </div>
 
           {quickViewProduct.description && (

@@ -9,6 +9,7 @@ import 'swiper/css/pagination';
 import ProductCard from '../components/common/ProductCard';
 import { productService } from '../services/api';
 import { useStore } from '../context/StoreContext';
+import { getProductImageUrl } from '../utils/imageUtils';
 import { initialProducts } from '../data/homeData';
 
 function StarIcons({ rating = 5, size = 16 }) {
@@ -94,16 +95,25 @@ export default function ProductDetailsPage() {
     ]).then(([prodData, relData]) => {
       if (!isMounted) return;
       const rawProd = prodData || initialProducts[0];
+      const rawPrimary = (rawProd.images && rawProd.images[0]) || rawProd.primaryImage || '/assets/images/prod-p2.jpg';
+      const rawGallery = rawProd.images && rawProd.images.length > 0 ? rawProd.images : [rawPrimary];
+      const sellingPrice = rawProd.price;
+      const comparePrice = rawProd.comparePrice !== undefined && rawProd.comparePrice !== null
+        ? rawProd.comparePrice
+        : (rawProd.discountPrice && rawProd.discountPrice < rawProd.price ? rawProd.price : undefined);
+
       const resolvedProduct = {
         ...rawProd,
         _id: rawProd._id || rawProd.id,
         title: rawProd.name || rawProd.title,
-        price: rawProd.discountPrice || rawProd.price,
-        originalPrice: rawProd.discountPrice ? rawProd.price : undefined,
-        formattedPrice: `Rs. ${(rawProd.discountPrice || rawProd.price).toFixed(2)}`,
-        primaryImage: (rawProd.images && rawProd.images[0]) || rawProd.primaryImage || '/assets/images/prod-p2.jpg',
-        images: rawProd.images && rawProd.images.length > 0 ? rawProd.images : [rawProd.primaryImage || '/assets/images/prod-p2.jpg'],
-        inStock: rawProd.stock !== undefined ? rawProd.stock > 0 : true,
+        price: sellingPrice,
+        comparePrice: comparePrice,
+        originalPrice: comparePrice,
+        formattedPrice: `Rs. ${Number(sellingPrice).toFixed(2)}`,
+        formattedComparePrice: comparePrice ? `Rs. ${Number(comparePrice).toFixed(2)}` : undefined,
+        primaryImage: getProductImageUrl(rawPrimary),
+        images: rawGallery.map((img) => getProductImageUrl(img)),
+        inStock: rawProd.stock !== undefined ? Number(rawProd.stock) > 0 : true,
         reviews: rawProd.reviews || [],
       };
 
@@ -112,15 +122,25 @@ export default function ProductDetailsPage() {
       const mappedRel = relList
         .filter((p) => p.slug !== slug && String(p._id) !== String(resolvedProduct._id))
         .slice(0, 4)
-        .map((p) => ({
-          ...p,
-          _id: p._id || p.id,
-          title: p.name || p.title,
-          formattedPrice: `Rs. ${(p.discountPrice || p.price).toFixed(2)}`,
-          primaryImage: (p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg',
-          secondaryImage: (p.images && p.images[1]) || (p.images && p.images[0]) || '/assets/images/prod-pp2.jpg',
-          inStock: p.stock !== undefined ? p.stock > 0 : true,
-        }));
+        .map((p) => {
+          const relSelling = p.price;
+          const relCompare = p.comparePrice !== undefined && p.comparePrice !== null
+            ? p.comparePrice
+            : (p.discountPrice && p.discountPrice < p.price ? p.price : undefined);
+
+          return {
+            ...p,
+            _id: p._id || p.id,
+            title: p.name || p.title,
+            price: relSelling,
+            comparePrice: relCompare,
+            formattedPrice: `Rs. ${Number(relSelling).toFixed(2)}`,
+            formattedComparePrice: relCompare ? `Rs. ${Number(relCompare).toFixed(2)}` : undefined,
+            primaryImage: getProductImageUrl((p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg'),
+            secondaryImage: getProductImageUrl((p.images && p.images[1]) || (p.images && p.images[0]) || '/assets/images/prod-pp2.jpg'),
+            inStock: p.stock !== undefined ? Number(p.stock) > 0 : true,
+          };
+        });
       setRelatedProducts(mappedRel);
 
       // Initialize default variant
@@ -174,9 +194,21 @@ export default function ProductDetailsPage() {
 
   // Price & Availability computation based on selected variant
   const displayPriceValue = selectedVariant ? selectedVariant.price : product.price;
+  const displayComparePriceValue = selectedVariant
+    ? (selectedVariant.comparePrice || selectedVariant.originalPrice)
+    : (product.comparePrice || product.originalPrice);
+
   const displayFormattedPrice = selectedVariant
     ? selectedVariant.formattedPrice || `Rs. ${Number(selectedVariant.price).toFixed(2)}`
     : product.formattedPrice || `Rs. ${Number(product.price).toFixed(2)}`;
+
+  const displayFormattedComparePrice = displayComparePriceValue && Number(displayComparePriceValue) > Number(displayPriceValue)
+    ? `Rs. ${Number(displayComparePriceValue).toFixed(2)}`
+    : null;
+
+  const discountPercent = displayComparePriceValue && Number(displayComparePriceValue) > Number(displayPriceValue)
+    ? Math.round(((Number(displayComparePriceValue) - Number(displayPriceValue)) / Number(displayComparePriceValue)) * 100)
+    : null;
 
   const isAvailable = selectedVariant ? selectedVariant.available : product.inStock;
   const wishlisted = isInWishlist(product._id);
@@ -570,9 +602,21 @@ export default function ProductDetailsPage() {
                     {/* Price & Availability Badge */}
                     <div className="price-wrapper mb-[0.6rem]" role="status">
                       <div className="price flex items-center flex-wrap gap-[1.2rem]">
-                        <span className="price-item price-item--regular font-body text-[1.8rem] sm:text-[2rem] font-normal text-black">
+                        <span className="price-item price-item--regular font-body text-[1.8rem] sm:text-[2rem] font-medium text-black">
                           {displayFormattedPrice}
                         </span>
+
+                        {displayFormattedComparePrice && (
+                          <span className="price-item price-item--compare font-body text-[1.5rem] sm:text-[1.7rem] text-stone-400 line-through">
+                            {displayFormattedComparePrice}
+                          </span>
+                        )}
+
+                        {discountPercent && (
+                          <span className="inline-block px-[8px] py-[2px] text-[1.2rem] font-bold rounded bg-[#fef9ea] text-[#586c38] border border-[#586c38]/30">
+                            {discountPercent}% OFF
+                          </span>
+                        )}
 
                         {!isAvailable ? (
                           <span className="badge inline-block px-[9px] py-[5px] text-[1.2rem] font-semibold rounded-[3px] bg-[#fef9ea] text-black border border-[#f7e9e3]">

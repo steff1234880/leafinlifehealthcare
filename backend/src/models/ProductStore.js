@@ -59,6 +59,7 @@ const initialProducts = [
       'Bashpika Thulasi Premium Bottle by Leaf in Life Healthcare is a trusted Ayurvedic formulation for migraine care, made with 100% natural Ayurvedic ingredients. It supports comfort from migraine headaches and common concerns such as cold, sinus discomfort and seasonal allergies.',
     price: 112.5,
     discountPrice: 105.0,
+    comparePrice: 125.0,
     images: [
       '/assets/images/prod-p2.jpg',
       '/assets/images/prod-pp2.jpg',
@@ -81,6 +82,7 @@ const initialProducts = [
       'Sarvanga Thailam is a traditional Ayurvedic medicated oil crafted with time-tested herbs for whole body massage, relieving muscular stiffness, fatigue, and supporting joint flexibility.',
     price: 150.0,
     discountPrice: 135.0,
+    comparePrice: 165.0,
     images: ['/assets/images/prod-p1.jpg', '/assets/images/prod-pp1.jpg'],
     category: 'Ayurvedic Oils',
     stock: 45,
@@ -97,6 +99,7 @@ const initialProducts = [
       'Sukh Bodycare Oil provides soothing natural nourishment for sensitive and stressed skin, formulated with nourishing herbal extracts to restore natural vitality.',
     price: 180.0,
     discountPrice: 160.0,
+    comparePrice: 200.0,
     images: ['/assets/images/prod-p3.jpg', '/assets/images/prod-pp3.jpg'],
     category: 'Ayurvedic Oils',
     stock: 30,
@@ -161,6 +164,7 @@ const initialProducts = [
       'Standard pack of pure steam-distilled Thulasi extract drops for steam inhalation, immunity support, and throat comfort.',
     price: 95.0,
     discountPrice: 85.0,
+    comparePrice: 110.0,
     images: ['/assets/images/prod-p2.jpg'],
     category: 'Ayurvedic Drops',
     stock: 60,
@@ -371,6 +375,9 @@ class ProductStore {
       description: data.description || '',
       price: Number(data.price),
       discountPrice: data.discountPrice ? Number(data.discountPrice) : null,
+      comparePrice: data.comparePrice !== undefined && data.comparePrice !== null && data.comparePrice !== ''
+        ? Number(data.comparePrice)
+        : (data.discountPrice ? Number(data.price) : null),
       images: Array.isArray(data.images) ? data.images : (data.image ? [data.image] : []),
       category: data.category.trim(),
       stock: Number(data.stock !== undefined ? data.stock : 0),
@@ -411,6 +418,11 @@ class ProductStore {
     if (data.price !== undefined) targetProduct.price = Number(data.price);
     if (data.discountPrice !== undefined) {
       targetProduct.discountPrice = data.discountPrice ? Number(data.discountPrice) : null;
+    }
+    if (data.comparePrice !== undefined) {
+      targetProduct.comparePrice = data.comparePrice !== null && data.comparePrice !== ''
+        ? Number(data.comparePrice)
+        : null;
     }
     if (data.images !== undefined) {
       targetProduct.images = Array.isArray(data.images) ? data.images : [data.images];

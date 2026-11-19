@@ -2,6 +2,7 @@
 // Powered by apiClient (axios with JWT bearer tokens & environment base URL)
 
 import apiClient from './apiClient';
+import { getProductImageUrl } from '../utils/imageUtils';
 import {
   initialProducts,
   initialTestimonials,
@@ -24,16 +25,27 @@ export const productService = {
     try {
       const { data } = await apiClient.get('/products?limit=6');
       if (data && data.products && data.products.length > 0) {
-        return data.products.map((p) => ({
-          ...p,
-          _id: p._id || p.id,
-          title: p.name || p.title,
-          price: p.discountPrice || p.price,
-          formattedPrice: `Rs. ${(p.discountPrice || p.price).toFixed(2)}`,
-          primaryImage: (p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg',
-          secondaryImage: (p.images && p.images[1]) || (p.images && p.images[0]) || '/assets/images/prod-pp2.jpg',
-          inStock: p.stock !== undefined ? p.stock > 0 : true,
-        }));
+        return data.products.map((p) => {
+          const rawPrimary = (p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg';
+          const rawSecondary = (p.images && p.images[1]) || (p.images && p.images[0]) || '/assets/images/prod-pp2.jpg';
+          const sellingPrice = p.price;
+          const comparePrice = p.comparePrice !== undefined && p.comparePrice !== null
+            ? p.comparePrice
+            : (p.discountPrice && p.discountPrice < p.price ? p.price : undefined);
+
+          return {
+            ...p,
+            _id: p._id || p.id,
+            title: p.name || p.title,
+            price: sellingPrice,
+            comparePrice: comparePrice,
+            formattedPrice: `Rs. ${Number(sellingPrice).toFixed(2)}`,
+            formattedComparePrice: comparePrice ? `Rs. ${Number(comparePrice).toFixed(2)}` : undefined,
+            primaryImage: getProductImageUrl(rawPrimary),
+            secondaryImage: getProductImageUrl(rawSecondary),
+            inStock: p.stock !== undefined ? Number(p.stock) > 0 : true,
+          };
+        });
       }
       return initialProducts;
     } catch {

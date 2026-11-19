@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/common/ProductCard';
 import { productService } from '../services/api';
+import { getProductImageUrl } from '../utils/imageUtils';
 import { productCategories, initialProducts } from '../data/homeData';
 
 const SORT_OPTIONS = [
@@ -97,15 +98,27 @@ export default function ShopPage() {
         if (isMounted) {
           const list = res.products || (Array.isArray(res) ? res : initialProducts);
           // Normalize backend products into UI schema
-          const mapped = list.map((p) => ({
-            ...p,
-            _id: p._id || p.id,
-            title: p.name || p.title,
-            primaryImage: (p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg',
-            secondaryImage: (p.images && p.images[1]) || p.secondaryImage || (p.images && p.images[0]) || '/assets/images/prod-pp2.jpg',
-            formattedPrice: `Rs. ${(p.discountPrice || p.price).toFixed(2)}`,
-            inStock: (p.stock !== undefined ? p.stock > 0 : true),
-          }));
+          const mapped = list.map((p) => {
+            const rawPrimary = (p.images && p.images[0]) || p.primaryImage || '/assets/images/prod-p2.jpg';
+            const rawSecondary = (p.images && p.images[1]) || p.secondaryImage || (p.images && p.images[0]) || '/assets/images/prod-pp2.jpg';
+            const sellingPrice = p.price;
+            const comparePrice = p.comparePrice !== undefined && p.comparePrice !== null
+              ? p.comparePrice
+              : (p.discountPrice && p.discountPrice < p.price ? p.price : undefined);
+
+            return {
+              ...p,
+              _id: p._id || p.id,
+              title: p.name || p.title,
+              price: sellingPrice,
+              comparePrice: comparePrice,
+              primaryImage: getProductImageUrl(rawPrimary),
+              secondaryImage: getProductImageUrl(rawSecondary),
+              formattedPrice: `Rs. ${Number(sellingPrice).toFixed(2)}`,
+              formattedComparePrice: comparePrice ? `Rs. ${Number(comparePrice).toFixed(2)}` : undefined,
+              inStock: p.stock !== undefined ? Number(p.stock) > 0 : true,
+            };
+          });
           setProducts(mapped);
           setLoading(false);
         }
@@ -213,8 +226,8 @@ export default function ShopPage() {
   const breadcrumbTitle = isCollectionsRoot
     ? 'All collections'
     : selectedCategory && selectedCategory !== 'all' && activeCategoryObj
-    ? activeCategoryObj.label
-    : 'all';
+      ? activeCategoryObj.label
+      : 'all';
 
   const currentSortLabel =
     SORT_OPTIONS.find((opt) => opt.value === sortBy)?.label || 'Featured';
@@ -329,11 +342,10 @@ export default function ShopPage() {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.slug)}
-                  className={`px-[1.8rem] py-[0.8rem] text-[1.4rem] font-body font-normal tracking-[0.5px] transition-all duration-300 cursor-pointer border ${
-                    isSelected
+                  className={`px-[1.8rem] py-[0.8rem] text-[1.4rem] font-body font-normal tracking-[0.5px] transition-all duration-300 cursor-pointer border ${isSelected
                       ? 'bg-[#586c38] text-white border-[#586c38]'
                       : 'bg-white text-black border-[#f7e9e3] hover:border-[#586c38] hover:text-[#586c38]'
-                  }`}
+                    }`}
                 >
                   {cat.label}
                 </button>
@@ -368,9 +380,8 @@ export default function ShopPage() {
                       aria-hidden="true"
                       focusable="false"
                       viewBox="0 0 10 6"
-                      className={`w-[10px] h-[6px] transition-transform duration-200 ${
-                        openDropdown === 'availability' ? 'rotate-180' : ''
-                      }`}
+                      className={`w-[10px] h-[6px] transition-transform duration-200 ${openDropdown === 'availability' ? 'rotate-180' : ''
+                        }`}
                     >
                       <path
                         fillRule="evenodd"
@@ -405,11 +416,10 @@ export default function ShopPage() {
                               className="sr-only"
                             />
                             <span
-                              className={`w-[1.6rem] h-[1.6rem] flex items-center justify-center border ${
-                                availability.includes('in_stock')
+                              className={`w-[1.6rem] h-[1.6rem] flex items-center justify-center border ${availability.includes('in_stock')
                                   ? 'border-black bg-white'
                                   : 'border-black/40 bg-white'
-                              }`}
+                                }`}
                             >
                               {availability.includes('in_stock') && (
                                 <svg
@@ -441,11 +451,10 @@ export default function ShopPage() {
                               className="sr-only"
                             />
                             <span
-                              className={`w-[1.6rem] h-[1.6rem] flex items-center justify-center border ${
-                                availability.includes('out_of_stock')
+                              className={`w-[1.6rem] h-[1.6rem] flex items-center justify-center border ${availability.includes('out_of_stock')
                                   ? 'border-black bg-white'
                                   : 'border-black/40 bg-white'
-                              }`}
+                                }`}
                             >
                               {availability.includes('out_of_stock') && (
                                 <svg
@@ -488,9 +497,8 @@ export default function ShopPage() {
                       aria-hidden="true"
                       focusable="false"
                       viewBox="0 0 10 6"
-                      className={`w-[10px] h-[6px] transition-transform duration-200 ${
-                        openDropdown === 'price' ? 'rotate-180' : ''
-                      }`}
+                      className={`w-[10px] h-[6px] transition-transform duration-200 ${openDropdown === 'price' ? 'rotate-180' : ''
+                        }`}
                     >
                       <path
                         fillRule="evenodd"
@@ -560,9 +568,8 @@ export default function ShopPage() {
                       aria-hidden="true"
                       focusable="false"
                       viewBox="0 0 10 6"
-                      className={`w-[10px] h-[6px] transition-transform duration-200 ${
-                        openDropdown === 'category' ? 'rotate-180' : ''
-                      }`}
+                      className={`w-[10px] h-[6px] transition-transform duration-200 ${openDropdown === 'category' ? 'rotate-180' : ''
+                        }`}
                     >
                       <path
                         fillRule="evenodd"
@@ -600,11 +607,10 @@ export default function ShopPage() {
                                   setSelectedCategory(cat.slug);
                                   setOpenDropdown(null);
                                 }}
-                                className={`w-full text-left px-[1rem] py-[0.8rem] text-[1.5rem] font-light bg-transparent border-0 cursor-pointer transition-colors ${
-                                  isSelected
+                                className={`w-full text-left px-[1rem] py-[0.8rem] text-[1.5rem] font-light bg-transparent border-0 cursor-pointer transition-colors ${isSelected
                                     ? 'text-[#586c38] font-normal bg-[#fef9ea]'
                                     : 'text-black hover:text-[#586c38]'
-                                }`}
+                                  }`}
                               >
                                 {cat.label}
                               </button>
@@ -714,11 +720,10 @@ export default function ShopPage() {
               <li
                 onClick={() => setGridColumns('list')}
                 title="List view"
-                className={`min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] flex items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${
-                  gridColumns === 'list'
+                className={`min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] flex items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${gridColumns === 'list'
                     ? 'bg-black text-white'
                     : 'bg-transparent text-black hover:bg-black hover:text-white'
-                }`}
+                  }`}
               >
                 <svg
                   className="icon-columns"
@@ -738,11 +743,10 @@ export default function ShopPage() {
               <li
                 onClick={() => setGridColumns('2')}
                 title="2 columns"
-                className={`min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] flex items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${
-                  gridColumns === '2'
+                className={`min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] flex items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${gridColumns === '2'
                     ? 'bg-black text-white'
                     : 'bg-transparent text-black hover:bg-black hover:text-white'
-                }`}
+                  }`}
               >
                 <svg
                   className="icon-columns"
@@ -761,11 +765,10 @@ export default function ShopPage() {
               <li
                 onClick={() => setGridColumns('3')}
                 title="3 columns"
-                className={`hidden md:flex min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${
-                  gridColumns === '3'
+                className={`hidden md:flex min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${gridColumns === '3'
                     ? 'bg-black text-white'
                     : 'bg-transparent text-black hover:bg-black hover:text-white'
-                }`}
+                  }`}
               >
                 <svg
                   className="icon-columns"
@@ -785,11 +788,10 @@ export default function ShopPage() {
               <li
                 onClick={() => setGridColumns('4')}
                 title="4 columns"
-                className={`hidden lg:flex min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${
-                  gridColumns === '4'
+                className={`hidden lg:flex min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${gridColumns === '4'
                     ? 'bg-black text-white'
                     : 'bg-transparent text-black hover:bg-black hover:text-white'
-                }`}
+                  }`}
               >
                 <svg
                   className="icon-columns"
@@ -810,11 +812,10 @@ export default function ShopPage() {
               <li
                 onClick={() => setGridColumns('5')}
                 title="5 columns"
-                className={`hidden min-[1540px]:flex min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${
-                  gridColumns === '5'
+                className={`hidden min-[1540px]:flex min-w-[36px] min-h-[36px] px-[8px] py-[5px] mx-[5px] items-center justify-center border border-[#f7e9e3] cursor-pointer transition-all duration-300 ${gridColumns === '5'
                     ? 'bg-black text-white'
                     : 'bg-transparent text-black hover:bg-black hover:text-white'
-                }`}
+                  }`}
               >
                 <svg
                   className="icon-columns"
@@ -854,9 +855,8 @@ export default function ShopPage() {
                     aria-hidden="true"
                     focusable="false"
                     viewBox="0 0 10 6"
-                    className={`w-[10px] h-[6px] transition-transform duration-200 ${
-                      openDropdown === 'sort' ? 'rotate-180' : ''
-                    }`}
+                    className={`w-[10px] h-[6px] transition-transform duration-200 ${openDropdown === 'sort' ? 'rotate-180' : ''
+                      }`}
                   >
                     <path
                       fillRule="evenodd"
@@ -877,11 +877,10 @@ export default function ShopPage() {
                             setSortBy(option.value);
                             setOpenDropdown(null);
                           }}
-                          className={`w-full text-left px-[1.6rem] py-[0.8rem] text-[1.4rem] font-body font-light border-0 bg-transparent cursor-pointer transition-colors ${
-                            sortBy === option.value
+                          className={`w-full text-left px-[1.6rem] py-[0.8rem] text-[1.4rem] font-body font-light border-0 bg-transparent cursor-pointer transition-colors ${sortBy === option.value
                               ? 'text-[#586c38] font-normal bg-[#fef9ea]'
                               : 'text-black hover:text-[#586c38] hover:bg-[#fef9ea]/50'
-                          }`}
+                            }`}
                         >
                           {option.label}
                         </button>
@@ -1002,11 +1001,10 @@ export default function ShopPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedCategory(cat.slug)}
-                            className={`w-full text-left px-[1.2rem] py-[0.8rem] text-[1.5rem] border transition-colors cursor-pointer ${
-                              isSelected
+                            className={`w-full text-left px-[1.2rem] py-[0.8rem] text-[1.5rem] border transition-colors cursor-pointer ${isSelected
                                 ? 'bg-[#586c38] text-white border-[#586c38]'
                                 : 'bg-white text-black border-[#f7e9e3]'
-                            }`}
+                              }`}
                           >
                             {cat.label}
                           </button>

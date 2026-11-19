@@ -30,6 +30,11 @@ const productSchema = new mongoose.Schema(
       default: null,
       min: [0, 'Discount price cannot be negative'],
     },
+    comparePrice: {
+      type: Number,
+      default: null,
+      min: [0, 'Compare price cannot be negative'],
+    },
     images: {
       type: [String],
       default: [],
