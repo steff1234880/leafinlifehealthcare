@@ -35,8 +35,17 @@ export function AuthProvider({ children }) {
           localStorage.setItem('leafinlife_user', JSON.stringify(data.user));
         }
       } catch (err) {
-        console.warn('Session expired or invalid, logging out:', err.response?.data?.message);
-        logout();
+        // Only clear session if token is genuinely invalid or unauthorized (401 / 403)
+        // If it's a network glitch, server offline, timeout, or 500 error, preserve the local session
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          console.warn('Session expired or unauthorized, clearing credentials:', err.response?.data?.message);
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('leafinlife_user_token');
+          localStorage.removeItem('leafinlife_user');
+        } else {
+          console.warn('Network or server error during session validation; keeping existing offline session:', err.message);
+        }
       } finally {
         setLoading(false);
       }

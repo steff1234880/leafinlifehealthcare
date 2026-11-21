@@ -3,31 +3,39 @@ import { Link, useNavigate } from 'react-router-dom';
 import AccountSidebar from '../components/account/AccountSidebar';
 import { orderService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { getProductImageUrl } from '../utils/imageUtils';
 
 export default function MyOrdersPage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    orderService
-      .getUserOrders()
-      .then((backendOrders) => {
-        if (Array.isArray(backendOrders)) {
-          setOrders(backendOrders);
-        } else {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/account/login');
+      return;
+    }
+
+    if (isAuthenticated) {
+      orderService
+        .getUserOrders()
+        .then((backendOrders) => {
+          if (Array.isArray(backendOrders)) {
+            setOrders(backendOrders);
+          } else {
+            setOrders([]);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load user orders:', err);
           setOrders([]);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load user orders:', err);
-        setOrders([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   const handleLogout = async () => {
     await logout();
@@ -58,8 +66,8 @@ export default function MyOrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <div className="account-scope min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-[1200px] mx-auto">
         {/* Breadcrumb Header */}
         <div className="mb-8">
           <nav className="flex items-center space-x-2 text-xs text-stone-400 mb-2 font-medium">
@@ -166,22 +174,45 @@ export default function MyOrdersPage() {
 
                     {/* Order items preview row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {order.items?.map((item, idx) => (
-                        <div key={item.key || idx} className="flex items-center space-x-3 text-xs">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            className="w-12 h-12 object-cover rounded border border-stone-200 flex-shrink-0"
-                          />
-                          <div className="overflow-hidden">
-                            <p className="font-medium text-stone-900 truncate">{item.title}</p>
-                            {item.variant && <p className="text-stone-500">{item.variant}</p>}
-                            <p className="text-stone-600 mt-0.5">
-                              Qty: {item.quantity} • {formatPrice(item.price)}
-                            </p>
+                      {order.items?.map((item, idx) => {
+                        const itemName =
+                          item.name ||
+                          item.title ||
+                          item.productName ||
+                          item.product?.name ||
+                          item.product?.title ||
+                          'Ayurvedic Product';
+                        const rawImage =
+                          item.image ||
+                          item.primaryImage ||
+                          (Array.isArray(item.images) && item.images[0]) ||
+                          item.product?.primaryImage ||
+                          '/assets/images/prod-p2.jpg';
+                        const imageUrl = getProductImageUrl(rawImage);
+                        const itemQty = Number(item.quantity ?? item.qty ?? 1);
+                        const itemPrice = Number(item.price ?? item.unitPrice ?? 0);
+
+                        return (
+                          <div key={item.key || item.productId || idx} className="flex items-center space-x-3.5 text-xs">
+                            <img
+                              src={imageUrl}
+                              alt={itemName}
+                              className="w-16 h-16 min-w-16 min-h-16 object-cover rounded-lg border border-stone-200 shrink-0 bg-stone-50"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/assets/images/prod-p2.jpg';
+                              }}
+                            />
+                            <div className="overflow-hidden min-w-0 flex-1">
+                              <p className="font-semibold text-stone-900 text-sm truncate">{itemName}</p>
+                              {item.variant && <p className="text-stone-500 text-xs">{item.variant}</p>}
+                              <p className="text-stone-600 text-xs mt-1">
+                                Qty: {itemQty} • <span className="font-semibold text-stone-900">{formatPrice(itemPrice)}</span>
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Order bottom line: payment method & tracking status note */}

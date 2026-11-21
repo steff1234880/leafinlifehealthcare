@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../AdminContext';
 
 export default function AdminSidebar({ isMobileOpen, setIsMobileOpen }) {
@@ -82,21 +82,41 @@ export default function AdminSidebar({ isMobileOpen, setIsMobileOpen }) {
     <div className="h-full flex flex-col justify-between bg-white border-r border-[#e5e5e5] w-64 shadow-xs">
       <div>
         {/* Brand Header */}
-        <div className="p-5 border-b border-[#f0f0f0] flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-heading text-lg font-bold text-[#2f3e10]">Leaf In Life</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-[#fef9ea] text-[#586c38] border border-[#586c38]/30">
-                Admin
-              </span>
+        <div className="px-5 py-4 border-b border-[#f0f0f0] flex items-center justify-between">
+          <Link to="/admin" className="flex items-center space-x-3 group min-w-0 flex-1">
+            {/* Elegant nature/healthcare-inspired Leaf Emblem */}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f2f7e8] to-[#e1ecd0] border border-[#586c38]/25 flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="w-5 h-5 text-[#3e5318]"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+              </svg>
             </div>
-            <p className="text-[11px] text-stone-500 mt-0.5">Healthcare Management</p>
-          </div>
+
+            {/* Brand Typography */}
+            <div className="min-w-0 flex-1">
+              <span className="font-heading text-lg font-bold tracking-tight text-[#23310a] leading-none whitespace-nowrap block">
+                Leaf in Life
+              </span>
+              <p className="text-[11px] font-medium text-stone-500 uppercase tracking-widest mt-1 whitespace-nowrap">
+                Healthcare
+              </p>
+            </div>
+          </Link>
+
           {setIsMobileOpen && (
             <button
               type="button"
               onClick={() => setIsMobileOpen(false)}
-              className="lg:hidden text-stone-400 hover:text-stone-700"
+              className="lg:hidden text-stone-400 hover:text-stone-700 p-1 rounded-md hover:bg-stone-100 transition-colors ml-1 shrink-0"
+              aria-label="Close sidebar"
             >
               ✕
             </button>
@@ -112,9 +132,9 @@ export default function AdminSidebar({ isMobileOpen, setIsMobileOpen }) {
               end={link.end}
               onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center px-3.5 py-2.5 rounded-md text-sm font-body transition-colors ${
+                `flex items-center px-3.5 py-2.5 rounded-md text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-[#2f3e10] text-white font-medium shadow-xs'
+                    ? 'bg-[#2f3e10] text-white shadow-xs'
                     : 'text-stone-700 hover:bg-[#f9f9eb] hover:text-[#2f3e10]'
                 }`
               }
@@ -131,9 +151,9 @@ export default function AdminSidebar({ isMobileOpen, setIsMobileOpen }) {
         <NavLink
           to="/"
           target="_blank"
-          className="flex items-center px-3 py-2 text-xs text-stone-600 hover:text-[#2f3e10] hover:bg-stone-50 rounded transition-colors"
+          className="flex items-center px-3 py-2 text-sm text-stone-600 hover:text-[#2f3e10] hover:bg-stone-50 rounded transition-colors"
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
           <span>View Public Store</span>
@@ -142,9 +162,9 @@ export default function AdminSidebar({ isMobileOpen, setIsMobileOpen }) {
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full flex items-center px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 rounded transition-colors border-0 bg-transparent cursor-pointer"
+          className="w-full flex items-center px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 rounded transition-colors border-0 bg-transparent cursor-pointer"
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
           <span>Sign Out</span>

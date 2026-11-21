@@ -1,9 +1,18 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 /**
  * ProductStore.js
- * In-memory fallback and synchronization store for Products and Categories.
+ * In-memory fallback and file/database persistence store for Products and Categories.
  * Seeded with authentic Leaf In Life Healthcare products and categories.
- * Works seamlessly alongside Mongoose / MongoDB.
+ * Works seamlessly alongside Mongoose / MongoDB with disk-backed fallback.
  */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.resolve(__dirname, '../data');
+const STORE_DATA_FILE = path.join(DATA_DIR, 'catalog_store.json');
 
 // Initial categories from authentic catalog
 const initialCategories = [
@@ -179,6 +188,61 @@ class ProductStore {
   constructor() {
     this.categories = [...initialCategories];
     this.products = [...initialProducts];
+    this.initPersistence();
+  }
+
+  initPersistence() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+
+      if (fs.existsSync(STORE_DATA_FILE)) {
+        const raw = fs.readFileSync(STORE_DATA_FILE, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.categories) && parsed.categories.length > 0) {
+          // Merge persistent categories with initial seed to avoid duplicates
+          const catMap = new Map();
+          initialCategories.forEach((c) => catMap.set(String(c._id), c));
+          parsed.categories.forEach((c) => catMap.set(String(c._id || c.id), c));
+          this.categories = Array.from(catMap.values());
+        }
+        if (Array.isArray(parsed.products) && parsed.products.length > 0) {
+          // Merge persistent products with initial seed
+          const prodMap = new Map();
+          initialProducts.forEach((p) => prodMap.set(String(p._id), p));
+          parsed.products.forEach((p) => prodMap.set(String(p._id || p.id), p));
+          this.products = Array.from(prodMap.values());
+        }
+      } else {
+        this.saveToFile();
+      }
+    } catch (err) {
+      console.warn('Could not initialize catalog persistence file:', err.message);
+    }
+  }
+
+  saveToFile() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      fs.writeFileSync(
+        STORE_DATA_FILE,
+        JSON.stringify(
+          {
+            categories: this.categories,
+            products: this.products,
+            updatedAt: new Date(),
+          },
+          null,
+          2
+        ),
+        'utf8'
+      );
+    } catch (err) {
+      console.warn('Failed to persist catalog data to disk:', err.message);
+    }
   }
 
   // ================= CATEGORY METHODS =================
@@ -217,6 +281,7 @@ class ProductStore {
     };
 
     this.categories.push(newCategory);
+    this.saveToFile();
     return newCategory;
   }
 
@@ -257,6 +322,7 @@ class ProductStore {
     if (data.isActive !== undefined) this.categories[index].isActive = Boolean(data.isActive);
     this.categories[index].updatedAt = new Date();
 
+    this.saveToFile();
     return this.categories[index];
   }
 
@@ -269,6 +335,7 @@ class ProductStore {
     }
 
     const deleted = this.categories.splice(index, 1)[0];
+    this.saveToFile();
     return deleted;
   }
 
@@ -388,6 +455,7 @@ class ProductStore {
     };
 
     this.products.unshift(newProduct);
+    this.saveToFile();
     return newProduct;
   }
 
@@ -432,6 +500,7 @@ class ProductStore {
     if (data.status !== undefined) targetProduct.status = data.status;
     targetProduct.updatedAt = new Date();
 
+    this.saveToFile();
     return targetProduct;
   }
 
@@ -444,6 +513,7 @@ class ProductStore {
     }
 
     const deleted = this.products.splice(index, 1)[0];
+    this.saveToFile();
     return deleted;
   }
 
@@ -464,6 +534,7 @@ class ProductStore {
 
     this.products[index].stock = stockNum;
     this.products[index].updatedAt = new Date();
+    this.saveToFile();
     return this.products[index];
   }
 }

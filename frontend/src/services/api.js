@@ -172,6 +172,29 @@ export const cartService = {
 };
 
 /**
+ * 3.5. Wishlist Services (Authenticated)
+ */
+export const wishlistService = {
+  // Get current user's wishlist from backend
+  getWishlist: async () => {
+    const { data } = await apiClient.get('/wishlist');
+    return data.wishlist || data;
+  },
+
+  // Add item to wishlist
+  addToWishlist: async (productId, product) => {
+    const { data } = await apiClient.post('/wishlist', { productId, product });
+    return data.wishlist || data;
+  },
+
+  // Remove item from wishlist
+  removeFromWishlist: async (productId) => {
+    const { data } = await apiClient.delete(`/wishlist/${productId}`);
+    return data.wishlist || data;
+  },
+};
+
+/**
  * 4. Checkout & Order Services (Authenticated)
  */
 export const orderService = {

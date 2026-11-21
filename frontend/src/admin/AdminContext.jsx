@@ -80,6 +80,7 @@ export function AdminProvider({ children }) {
             description: c.description || 'Authentic Kerala herbal formulation',
             image: c.image || '',
             isActive: c.isActive !== false,
+            productCount: c.productCount !== undefined ? c.productCount : 0,
           }))
         );
       }

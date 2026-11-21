@@ -45,9 +45,33 @@ export default function ShopPage() {
   const [openDropdown, setOpenDropdown] = useState(null); // 'availability' | 'price' | 'category' | 'sort' | null
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  // Products state
+  // Products & Categories state
   const [products, setProducts] = useState(initialProducts);
+  const [categories, setCategories] = useState(productCategories);
   const [loading, setLoading] = useState(true);
+
+  // Load live categories from backend API to ensure newly added admin collections are instantly available
+  useEffect(() => {
+    productService
+      .getCategories()
+      .then((catList) => {
+        if (Array.isArray(catList) && catList.length > 0) {
+          const formatted = [
+            { id: 'all', label: 'All Products', slug: 'all', value: 'all' },
+            ...catList.map((c) => ({
+              id: c._id || c.id || c.slug,
+              label: c.name || c.label,
+              slug: c.slug,
+              value: c.name || c.label,
+            })),
+          ];
+          setCategories(formatted);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load dynamic categories for shop:', err.message);
+      });
+  }, []);
 
   const filterBarRef = useRef(null);
 
@@ -178,7 +202,7 @@ export default function ShopPage() {
   // Active filter count & tags
   const activeFilterTags = [];
   if (selectedCategory && selectedCategory !== 'all') {
-    const catObj = productCategories.find(
+    const catObj = categories.find(
       (c) => c.slug === selectedCategory || c.value.toLowerCase() === selectedCategory.toLowerCase()
     );
     activeFilterTags.push({
@@ -220,7 +244,7 @@ export default function ShopPage() {
   }
 
   // Dynamic Breadcrumb Title
-  const activeCategoryObj = productCategories.find(
+  const activeCategoryObj = categories.find(
     (c) => c.slug === selectedCategory || c.value.toLowerCase() === selectedCategory.toLowerCase()
   );
   const breadcrumbTitle = isCollectionsRoot
@@ -333,7 +357,7 @@ export default function ShopPage() {
         <div className="row" ref={filterBarRef}>
           {/* Category Selection Pills Bar */}
           <div className="flex flex-wrap items-center justify-center gap-[0.8rem] sm:gap-[1.2rem] mb-[2.4rem] pb-[1.6rem] border-b border-[#f7e9e3]">
-            {productCategories.map((cat) => {
+            {categories.map((cat) => {
               const isSelected =
                 selectedCategory.toLowerCase() === cat.slug.toLowerCase() ||
                 selectedCategory.toLowerCase() === cat.value.toLowerCase();
@@ -595,7 +619,7 @@ export default function ShopPage() {
                         </button>
                       </div>
                       <ul className="facets__list list-none m-0 p-[1.2rem_1.5rem] space-y-[0.4rem]">
-                        {productCategories.map((cat) => {
+                        {categories.map((cat) => {
                           const isSelected =
                             selectedCategory.toLowerCase() === cat.slug.toLowerCase() ||
                             selectedCategory.toLowerCase() === cat.value.toLowerCase();
@@ -992,7 +1016,7 @@ export default function ShopPage() {
                     Category
                   </h3>
                   <ul className="list-none m-0 p-0 space-y-[0.8rem]">
-                    {productCategories.map((cat) => {
+                    {categories.map((cat) => {
                       const isSelected =
                         selectedCategory.toLowerCase() === cat.slug.toLowerCase() ||
                         selectedCategory.toLowerCase() === cat.value.toLowerCase();

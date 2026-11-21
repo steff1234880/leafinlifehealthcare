@@ -1,12 +1,56 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 /**
  * CartStore.js
- * In-memory fallback cart store supporting user-isolated shopping carts.
- * Works seamlessly alongside Mongoose / MongoDB Cart model.
+ * Persistent file & memory fallback cart store supporting user-isolated shopping carts.
+ * Works seamlessly alongside Mongoose / MongoDB Cart model with disk persistence.
  */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.resolve(__dirname, '../data');
+const CART_DATA_FILE = path.join(DATA_DIR, 'cart_store.json');
 
 class CartStore {
   constructor() {
     this.carts = new Map(); // userId -> { userId, items: [], totalQuantity, totalAmount, updatedAt }
+    this.initPersistence();
+  }
+
+  initPersistence() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      if (fs.existsSync(CART_DATA_FILE)) {
+        const raw = fs.readFileSync(CART_DATA_FILE, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          Object.entries(parsed).forEach(([k, v]) => {
+            this.carts.set(String(k), v);
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load cart persistence file:', err.message);
+    }
+  }
+
+  saveToFile() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const obj = {};
+      for (const [k, v] of this.carts.entries()) {
+        obj[k] = v;
+      }
+      fs.writeFileSync(CART_DATA_FILE, JSON.stringify(obj, null, 2), 'utf8');
+    } catch (err) {
+      console.warn('Failed to save carts to disk:', err.message);
+    }
   }
 
   // Get or initialize a user cart
@@ -21,6 +65,7 @@ class CartStore {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+      this.saveToFile();
     }
     return this.carts.get(key);
   }
@@ -32,6 +77,7 @@ class CartStore {
         cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0) * 100
       ) / 100;
     cart.updatedAt = new Date();
+    this.saveToFile();
     return cart;
   }
 
@@ -133,6 +179,7 @@ class CartStore {
     cart.totalQuantity = 0;
     cart.totalAmount = 0;
     cart.updatedAt = new Date();
+    this.saveToFile();
     return cart;
   }
 }

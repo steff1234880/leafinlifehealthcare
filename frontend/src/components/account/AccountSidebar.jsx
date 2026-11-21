@@ -9,7 +9,7 @@ export default function AccountSidebar({ user, onLogout }) {
       onLogout();
     } else {
       localStorage.removeItem('leafinlife_user');
-      localStorage.removeItem('leafinlife_token');
+      localStorage.removeItem('leafinlife_user_token');
       navigate('/account/login');
     }
   };
@@ -46,31 +46,32 @@ export default function AccountSidebar({ user, onLogout }) {
   ];
 
   return (
-    <aside className="w-full lg:w-72 bg-white border border-[#e5e5e5] rounded-lg p-5 shadow-sm">
+    <aside className="w-full lg:w-[260px] lg:min-w-[260px] bg-white border border-[#e5e5e5] rounded-xl p-6 shadow-sm shrink-0">
       {/* User Greeting Block */}
-      <div className="flex items-center space-x-3 pb-5 mb-5 border-b border-[#f0f0f0]">
-        <div className="w-12 h-12 rounded-full bg-[#fef9ea] border border-[#586c38]/30 text-[#2f3e10] flex items-center justify-center font-serif text-xl font-bold">
+      <div className="flex items-center space-x-3.5 pb-5 mb-5 border-b border-[#f0f0f0]">
+        <div className="w-14 h-14 rounded-full bg-[#fef9ea] border border-[#586c38]/30 text-[#2f3e10] flex items-center justify-center font-serif text-2xl font-bold shrink-0">
           {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
         </div>
-        <div className="overflow-hidden">
-          <p className="text-xs text-[#888888] font-body uppercase tracking-wider">Hello,</p>
-          <h2 className="text-sm font-semibold text-stone-900 truncate font-heading">
+        <div className="overflow-hidden min-w-0">
+          <p className="text-xs text-[#888888] font-body uppercase tracking-wider font-medium">Hello,</p>
+          <h2 className="text-base font-semibold text-stone-900 truncate font-heading leading-tight mt-0.5">
             {user?.name || 'Valued Customer'}
           </h2>
+          <p className="text-xs text-stone-500 truncate mt-0.5">{user?.email}</p>
         </div>
       </div>
 
       {/* Nav links */}
-      <nav className="space-y-1">
+      <nav className="space-y-1.5">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex items-center px-3.5 py-3 rounded-md text-sm font-body transition-all ${
+              `flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-[#2f3e10] text-white font-medium shadow-sm'
+                  ? 'bg-[#2f3e10] text-white shadow-sm'
                   : 'text-stone-700 hover:bg-[#f9f9eb] hover:text-[#2f3e10]'
               }`
             }
@@ -84,9 +85,9 @@ export default function AccountSidebar({ user, onLogout }) {
         <button
           type="button"
           onClick={handleLogoutClick}
-          className="w-full flex items-center px-3.5 py-3 rounded-md text-sm font-body text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors mt-4 text-left border-0 bg-transparent cursor-pointer"
+          className="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors mt-4 text-left border-0 bg-transparent cursor-pointer"
         >
-          <svg className="w-5 h-5 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 mr-3 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
           <span>Log Out</span>

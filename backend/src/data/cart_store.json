@@ -1,0 +1,43 @@
+{
+  "usr_1795107077667_187": {
+    "userId": "usr_1795107077667_187",
+    "items": [],
+    "totalQuantity": 0,
+    "totalAmount": 0,
+    "createdAt": "2026-11-20T15:02:56.313Z",
+    "updatedAt": "2026-11-20T15:02:56.313Z"
+  },
+  "usr_admin_1": {
+    "userId": "usr_admin_1",
+    "items": [
+      {
+        "productId": "1795168567908",
+        "name": "Persistent Tonic 1795168567908",
+        "image": "",
+        "price": 300,
+        "quantity": 3,
+        "subtotal": 900
+      }
+    ],
+    "totalQuantity": 3,
+    "totalAmount": 900,
+    "createdAt": "2026-11-20T15:04:05.553Z",
+    "updatedAt": "2026-11-20T15:04:21.613Z"
+  },
+  "usr_1795195553044_931": {
+    "userId": "usr_1795195553044_931",
+    "items": [],
+    "totalQuantity": 0,
+    "totalAmount": 0,
+    "createdAt": "2026-11-20T17:25:53.111Z",
+    "updatedAt": "2026-11-21T03:46:49.580Z"
+  },
+  "usr_demo_1": {
+    "userId": "usr_demo_1",
+    "items": [],
+    "totalQuantity": 0,
+    "totalAmount": 0,
+    "createdAt": "2026-11-21T03:41:49.809Z",
+    "updatedAt": "2026-11-21T03:44:47.011Z"
+  }
+}

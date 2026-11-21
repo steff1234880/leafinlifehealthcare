@@ -36,11 +36,44 @@ export default function AdminProductsPage() {
     };
   }, [imagePreviewUrl]);
 
+  // Helpers for category relationship resolution
+  const normalize = (val) => String(val || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const resolveProductCategoryId = (product) => {
+    if (!product) return '';
+    const pCatId = product.categoryId || product.category_id;
+    if (pCatId) {
+      const found = categories.find((c) => String(c.id) === String(pCatId));
+      if (found) return String(found.id);
+    }
+    const rawCat = product.category;
+    if (!rawCat) return '';
+    const directMatch = categories.find((c) => String(c.id) === String(rawCat));
+    if (directMatch) return String(directMatch.id);
+    const normRaw = normalize(rawCat);
+    const matched = categories.find((c) => normalize(c.slug) === normRaw || normalize(c.name) === normRaw);
+    return matched ? String(matched.id) : String(rawCat);
+  };
+
+  const getCategoryDisplayName = (product) => {
+    const catId = resolveProductCategoryId(product);
+    const found = categories.find((c) => String(c.id) === catId || c.slug === catId);
+    return found ? found.name : (product.category ? String(product.category).replace(/-/g, ' ') : 'General');
+  };
+
   // Filtered products
   const filteredProducts = products.filter((p) => {
     const matchesQuery = p.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    return matchesQuery && matchesCategory;
+    if (!matchesQuery) return false;
+    if (selectedCategory === 'all') return true;
+
+    const pCatId = resolveProductCategoryId(p);
+    if (pCatId === selectedCategory || String(pCatId) === String(selectedCategory)) return true;
+    const targetCat = categories.find((c) => String(c.id) === String(selectedCategory) || c.slug === selectedCategory);
+    if (targetCat && String(targetCat.id) === pCatId) return true;
+    const normTarget = normalize(selectedCategory);
+    const normRaw = normalize(p.category);
+    return normRaw === normTarget;
   });
 
   const formatPrice = (amount) => {
@@ -182,21 +215,21 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans text-sm">
       {/* Top Header & Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-heading font-bold text-stone-900">
             Product Management ({products.length})
           </h1>
-          <p className="text-xs text-stone-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             Add, update, adjust prices and manage inventory for store catalog
           </p>
         </div>
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="px-5 py-2.5 bg-[#2f3e10] hover:bg-[#586c38] text-white text-xs font-semibold rounded uppercase tracking-wider transition-colors shadow-xs"
+          className="px-5 py-2.5 bg-[#2f3e10] hover:bg-[#586c38] text-white text-sm font-semibold rounded uppercase tracking-wider transition-colors shadow-xs"
         >
           + Add New Product
         </button>
@@ -210,7 +243,7 @@ export default function AdminProductsPage() {
             placeholder="Search products by title..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 text-xs border border-stone-300 rounded focus:outline-none focus:border-[#586c38]"
+            className="w-full h-10 pl-9 pr-3 text-sm border border-stone-300 rounded focus:outline-none focus:border-[#586c38]"
           />
           <svg className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -218,11 +251,11 @@ export default function AdminProductsPage() {
         </div>
 
         <div className="w-full sm:w-auto flex items-center space-x-2">
-          <span className="text-xs text-stone-500 font-medium">Category:</span>
+          <span className="text-sm text-stone-600 font-medium">Category:</span>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="h-10 px-3 text-xs border border-stone-300 rounded focus:outline-none focus:border-[#586c38] bg-white"
+            className="h-10 px-3 text-sm border border-stone-300 rounded focus:outline-none focus:border-[#586c38] bg-white"
           >
             <option value="all">All Categories</option>
             {categories.map((c) => (
@@ -237,9 +270,9 @@ export default function AdminProductsPage() {
       {/* Products Table */}
       <div className="bg-white border border-[#e5e5e5] rounded-xl shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase tracking-wider font-semibold">
+              <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 uppercase tracking-wider font-semibold text-xs">
                 <th className="py-3 px-4">Product</th>
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Price</th>
@@ -251,14 +284,14 @@ export default function AdminProductsPage() {
             <tbody className="divide-y divide-stone-100">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-stone-500">
+                  <td colSpan="6" className="py-8 text-center text-stone-500 text-sm">
                     No products found matching &ldquo;{searchTerm}&rdquo;
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p) => (
                   <tr key={p._id} className="hover:bg-stone-50/70 transition-colors">
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center space-x-3">
                         <img
                           src={getProductImageUrl(p.primaryImage)}
@@ -266,27 +299,27 @@ export default function AdminProductsPage() {
                           className="w-12 h-12 object-cover rounded border border-stone-200 shrink-0 bg-stone-50"
                         />
                         <div className="overflow-hidden">
-                          <p className="font-semibold text-stone-900 text-xs sm:text-sm line-clamp-1">
+                          <p className="font-semibold text-stone-900 text-sm line-clamp-1">
                             {p.title}
                           </p>
-                          <p className="text-[11px] text-stone-400">SKU: {p.sku || p._id}</p>
+                          <p className="text-xs text-stone-500">SKU: {p.sku || p._id}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-stone-600 capitalize">
-                      {p.category ? p.category.replace(/-/g, ' ') : 'General'}
+                    <td className="py-3.5 px-4 text-stone-700 capitalize text-sm">
+                      {getCategoryDisplayName(p)}
                     </td>
-                    <td className="py-3 px-4 font-bold text-stone-900">
+                    <td className="py-3.5 px-4 font-bold text-stone-900 text-sm">
                       {formatPrice(p.price)}
                       {p.comparePrice && (
-                        <span className="block text-[10px] text-stone-400 line-through font-normal">
+                        <span className="block text-xs text-stone-400 line-through font-normal">
                           {formatPrice(p.comparePrice)}
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                        className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${
                           (Number(p.stock) || 0) === 0
                             ? 'bg-red-100 text-red-700'
                             : (Number(p.stock) || 0) <= 10
@@ -297,12 +330,12 @@ export default function AdminProductsPage() {
                         {p.stock ?? 0} units
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       {(() => {
                         const inStock = Number(p.stock) > 0;
                         return (
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                               inStock
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 : 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -313,18 +346,18 @@ export default function AdminProductsPage() {
                         );
                       })()}
                     </td>
-                    <td className="py-3 px-4 text-right space-x-2">
+                    <td className="py-3.5 px-4 text-right space-x-2">
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(p)}
-                        className="px-2.5 py-1 text-xs font-semibold text-[#586c38] hover:bg-[#586c38]/10 rounded transition"
+                        className="px-3 py-1 text-xs font-semibold text-[#586c38] hover:bg-[#586c38]/10 rounded transition"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(p._id, p.title)}
-                        className="px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded transition"
+                        className="px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded transition"
                       >
                         Delete
                       </button>
@@ -359,7 +392,7 @@ export default function AdminProductsPage() {
             </div>
 
             {formError && (
-              <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-600 text-xs flex items-center">
+              <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-600 text-sm flex items-center">
                 <svg className="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -367,9 +400,9 @@ export default function AdminProductsPage() {
               </div>
             )}
 
-            <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
+            <form onSubmit={handleFormSubmit} className="space-y-4 text-sm">
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">
+                <label className="block font-semibold text-stone-700 mb-1 text-sm">
                   Product Title *
                 </label>
                 <input
@@ -378,19 +411,19 @@ export default function AdminProductsPage() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g. SARVANGA SNEHAM 200ML"
-                  className="w-full h-10 px-3 border border-stone-300 rounded text-xs focus:outline-none focus:border-[#586c38]"
+                  className="w-full h-10 px-3 border border-stone-300 rounded text-sm focus:outline-none focus:border-[#586c38]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 mb-1 text-sm">
                     Category *
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full h-10 px-3 border border-stone-300 rounded text-xs bg-white focus:outline-none focus:border-[#586c38]"
+                    className="w-full h-10 px-3 border border-stone-300 rounded text-sm bg-white focus:outline-none focus:border-[#586c38]"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.slug}>
@@ -400,7 +433,7 @@ export default function AdminProductsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 mb-1 text-sm">
                     Stock Quantity *
                   </label>
                   <input
@@ -409,14 +442,14 @@ export default function AdminProductsPage() {
                     required
                     value={formData.stock}
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    className="w-full h-10 px-3 border border-stone-300 rounded text-xs focus:outline-none focus:border-[#586c38]"
+                    className="w-full h-10 px-3 border border-stone-300 rounded text-sm focus:outline-none focus:border-[#586c38]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 mb-1 text-sm">
                     Price (INR) *
                   </label>
                   <input
@@ -427,11 +460,11 @@ export default function AdminProductsPage() {
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     placeholder="699.00"
-                    className="w-full h-10 px-3 border border-stone-300 rounded text-xs focus:outline-none focus:border-[#586c38]"
+                    className="w-full h-10 px-3 border border-stone-300 rounded text-sm focus:outline-none focus:border-[#586c38]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 mb-1 text-sm">
                     Compare at Price (INR)
                   </label>
                   <input
@@ -441,14 +474,14 @@ export default function AdminProductsPage() {
                     value={formData.comparePrice}
                     onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
                     placeholder="799.00"
-                    className="w-full h-10 px-3 border border-stone-300 rounded text-xs focus:outline-none focus:border-[#586c38]"
+                    className="w-full h-10 px-3 border border-stone-300 rounded text-sm focus:outline-none focus:border-[#586c38]"
                   />
                 </div>
               </div>
 
               {/* Image Upload / Preview */}
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">
+                <label className="block font-semibold text-stone-700 mb-1 text-sm">
                   Product Image
                 </label>
                 <div className="flex items-center space-x-4">
@@ -473,10 +506,10 @@ export default function AdminProductsPage() {
                         setFormData({ ...formData, primaryImage: e.target.value });
                         setImagePreviewUrl(getProductImageUrl(e.target.value));
                       }}
-                      className="mt-2 w-full h-8 px-2.5 border border-stone-300 rounded text-[11px] focus:outline-none focus:border-[#586c38] disabled:bg-stone-100 disabled:text-stone-400"
+                      className="mt-2 w-full h-9 px-3 border border-stone-300 rounded text-xs focus:outline-none focus:border-[#586c38] disabled:bg-stone-100 disabled:text-stone-400"
                     />
                     {selectedImageFile && (
-                      <div className="flex items-center justify-between mt-1 text-[11px] text-emerald-700">
+                      <div className="flex items-center justify-between mt-1 text-xs text-emerald-700">
                         <span>Selected file: {selectedImageFile.name} ({(selectedImageFile.size / 1024).toFixed(1)} KB)</span>
                         <button
                           type="button"
@@ -498,7 +531,7 @@ export default function AdminProductsPage() {
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">
+                <label className="block font-semibold text-stone-700 mb-1 text-sm">
                   Short Description
                 </label>
                 <input
@@ -506,7 +539,7 @@ export default function AdminProductsPage() {
                   value={formData.shortDescription}
                   onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
                   placeholder="Authentic herbal formulation for wellness"
-                  className="w-full h-10 px-3 border border-stone-300 rounded text-xs focus:outline-none focus:border-[#586c38]"
+                  className="w-full h-10 px-3 border border-stone-300 rounded text-sm focus:outline-none focus:border-[#586c38]"
                 />
               </div>
 
@@ -514,14 +547,14 @@ export default function AdminProductsPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-stone-300 text-stone-700 rounded text-xs font-semibold hover:bg-stone-50"
+                  className="px-4 py-2 border border-stone-300 text-stone-700 rounded text-sm font-semibold hover:bg-stone-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 bg-[#2f3e10] hover:bg-[#586c38] text-white rounded text-xs font-semibold uppercase tracking-wider transition disabled:opacity-60 cursor-pointer"
+                  className="px-5 py-2 bg-[#2f3e10] hover:bg-[#586c38] text-white rounded text-sm font-semibold uppercase tracking-wider transition disabled:opacity-60 cursor-pointer"
                 >
                   {isSubmitting
                     ? selectedImageFile

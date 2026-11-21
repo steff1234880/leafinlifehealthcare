@@ -69,27 +69,27 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8 font-sans">
+    <div className="space-y-8 font-sans text-sm">
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#e5e5e5] rounded-xl p-6 shadow-xs">
         <div>
           <h1 className="text-2xl font-heading font-bold text-stone-900">
             Welcome to Leaf In Life Admin
           </h1>
-          <p className="text-xs text-stone-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             Real-time analytics and store management overview
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Link
             to="/admin/products?action=new"
-            className="px-4 py-2 bg-[#2f3e10] hover:bg-[#586c38] text-white text-xs font-semibold rounded uppercase tracking-wider transition-colors shadow-xs"
+            className="px-4 py-2 bg-[#2f3e10] hover:bg-[#586c38] text-white text-sm font-semibold rounded uppercase tracking-wider transition-colors shadow-xs"
           >
             + Add New Product
           </Link>
           <Link
             to="/admin/orders"
-            className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 text-xs font-semibold rounded uppercase tracking-wider transition-colors"
+            className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-50 text-sm font-semibold rounded uppercase tracking-wider transition-colors"
           >
             View Orders
           </Link>
@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
               <h3 className="text-2xl font-bold font-heading text-stone-900 mt-1">
                 {card.value}
               </h3>
-              <p className="text-[11px] text-stone-500 mt-1">{card.subtitle}</p>
+              <p className="text-xs text-stone-500 mt-1">{card.subtitle}</p>
             </div>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${card.bg}`}>
               {card.icon}
@@ -125,33 +125,33 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-7 bg-white border border-[#e5e5e5] rounded-xl p-6 shadow-xs">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#f0f0f0]">
             <div>
-              <h2 className="text-base font-heading font-semibold text-stone-900">
+              <h2 className="text-lg font-heading font-semibold text-stone-900">
                 Recent Store Orders
               </h2>
-              <p className="text-xs text-stone-500">Latest customer transactions</p>
+              <p className="text-sm text-stone-500">Latest customer transactions</p>
             </div>
             <Link
               to="/admin/orders"
-              className="text-xs font-semibold text-[#586c38] hover:underline"
+              className="text-sm font-semibold text-[#586c38] hover:underline"
             >
               See all ({orders.length}) →
             </Link>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-stone-200 text-stone-400 uppercase tracking-wider">
-                  <th className="py-2.5 font-semibold">Order</th>
-                  <th className="py-2.5 font-semibold">Customer</th>
-                  <th className="py-2.5 font-semibold">Status</th>
-                  <th className="py-2.5 font-semibold text-right">Total</th>
+                <tr className="border-b border-stone-200 text-stone-500 uppercase tracking-wider font-semibold text-xs">
+                  <th className="py-2.5">Order</th>
+                  <th className="py-2.5">Customer</th>
+                  <th className="py-2.5">Status</th>
+                  <th className="py-2.5 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {orders.slice(0, 5).map((order) => (
                   <tr key={order.orderId} className="hover:bg-stone-50/70 transition-colors">
-                    <td className="py-3 font-medium text-stone-900">
+                    <td className="py-3 font-medium text-stone-900 text-sm">
                       <Link
                         to={`/admin/orders/${order.orderId}`}
                         className="text-[#586c38] hover:underline font-semibold"
@@ -159,15 +159,15 @@ export default function AdminDashboardPage() {
                         #{order.orderId}
                       </Link>
                     </td>
-                    <td className="py-3 text-stone-700">
+                    <td className="py-3 text-stone-700 text-sm">
                       <p className="font-medium">
                         {order.shippingAddress?.firstName} {order.shippingAddress?.lastName}
                       </p>
-                      <p className="text-[11px] text-stone-400">{order.customer?.emailOrPhone}</p>
+                      <p className="text-xs text-stone-400">{order.customer?.emailOrPhone}</p>
                     </td>
                     <td className="py-3">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                           order.orderStatus === 'Delivered'
                             ? 'bg-green-100 text-green-800'
                             : order.orderStatus === 'Shipped'
@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
                         {order.orderStatus || 'Processing'}
                       </span>
                     </td>
-                    <td className="py-3 text-right font-bold text-stone-900">
+                    <td className="py-3 text-right font-bold text-stone-900 text-sm">
                       {formatPrice(order.pricing?.grandTotal)}
                     </td>
                   </tr>
@@ -194,14 +194,14 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-5 bg-white border border-[#e5e5e5] rounded-xl p-6 shadow-xs">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#f0f0f0]">
             <div>
-              <h2 className="text-base font-heading font-semibold text-stone-900">
+              <h2 className="text-lg font-heading font-semibold text-stone-900">
                 Inventory Alerts
               </h2>
-              <p className="text-xs text-stone-500">Low or depleted stock items</p>
+              <p className="text-sm text-stone-500">Low or depleted stock items</p>
             </div>
             <Link
               to="/admin/inventory"
-              className="text-xs font-semibold text-[#586c38] hover:underline"
+              className="text-sm font-semibold text-[#586c38] hover:underline"
             >
               Inventory Manager →
             </Link>
@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
               .map((prod) => (
                 <div
                   key={prod._id}
-                  className="p-3 rounded-lg border border-stone-200 flex items-center justify-between text-xs"
+                  className="p-3 rounded-lg border border-stone-200 flex items-center justify-between text-sm"
                 >
                   <div className="flex items-center space-x-3">
                     <img
@@ -223,15 +223,15 @@ export default function AdminDashboardPage() {
                       className="w-10 h-10 object-cover rounded border border-stone-200 shrink-0"
                     />
                     <div className="overflow-hidden">
-                      <p className="font-semibold text-stone-900 truncate max-w-[180px]">
+                      <p className="font-semibold text-stone-900 truncate max-w-[180px] text-sm">
                         {prod.title}
                       </p>
-                      <p className="text-[11px] text-stone-500">{formatPrice(prod.price)}</p>
+                      <p className="text-xs text-stone-500">{formatPrice(prod.price)}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                      className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${
                         (Number(prod.stock) || 0) === 0
                           ? 'bg-red-100 text-red-700'
                           : 'bg-amber-100 text-amber-800'

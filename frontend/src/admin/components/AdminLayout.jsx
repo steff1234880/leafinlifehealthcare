@@ -14,7 +14,7 @@ function AdminLayoutInner() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] flex font-sans text-stone-800">
+    <div className="admin-scope min-h-screen bg-[#fafafa] flex font-sans text-stone-800 text-sm">
       {/* Sidebar */}
       <AdminSidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
 
@@ -34,7 +34,7 @@ function AdminLayoutInner() {
               </svg>
             </button>
             <div className="hidden sm:block">
-              <span className="text-xs uppercase tracking-wider text-stone-400 font-semibold">
+              <span className="text-xs uppercase tracking-wider text-stone-500 font-semibold">
                 Healthcare Management Console
               </span>
             </div>
@@ -43,12 +43,12 @@ function AdminLayoutInner() {
           {/* User profile right menu */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#2f3e10] text-white flex items-center justify-center font-bold text-xs font-serif">
+              <div className="w-9 h-9 rounded-full bg-[#2f3e10] text-white flex items-center justify-center font-bold text-sm font-serif">
                 A
               </div>
               <div className="hidden sm:block text-left text-xs">
                 <p className="font-semibold text-stone-900 leading-tight">Admin User</p>
-                <p className="text-[11px] text-[#586c38] font-medium leading-tight">Super Admin</p>
+                <p className="text-xs text-[#586c38] font-medium leading-tight">Super Admin</p>
               </div>
             </div>
           </div>

@@ -33,7 +33,7 @@ export async function getCart(req, res, next) {
     const userId = req.user.id;
 
     if (isDbConnected()) {
-      let cart = await Cart.findOne({ userId }).populate('items.productId');
+      let cart = await Cart.findOne({ userId });
 
       if (!cart) {
         cart = await Cart.create({

@@ -6,7 +6,14 @@ import apiClient from '../services/apiClient';
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+
+  // If already authenticated, redirect to Profile or target
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(location.state?.from || '/account', { replace: true });
+    }
+  }, [isAuthenticated, navigate, location.state]);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -85,7 +92,7 @@ export default function LoginPage() {
       if (res && res.success) {
         setSuccessMessage('Login successful! Redirecting...');
         setTimeout(() => {
-          navigate(location.state?.from || '/');
+          navigate(location.state?.from || '/account');
         }, 800);
       }
     } catch (err) {

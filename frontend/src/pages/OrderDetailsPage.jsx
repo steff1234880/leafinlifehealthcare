@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import AccountSidebar from '../components/account/AccountSidebar';
 import { orderService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { getProductImageUrl } from '../utils/imageUtils';
 
 const ORDER_STEPS = [
   { key: 'Pending', label: 'Order Placed', desc: 'Order received & confirmed' },
@@ -15,7 +16,7 @@ const ORDER_STEPS = [
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,22 +26,29 @@ export default function OrderDetailsPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Fetch from backend API
-    orderService
-      .getOrderById(orderId)
-      .then((ord) => {
-        if (ord) {
-          setOrder(ord);
-        } else {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/account/login');
+      return;
+    }
+
+    if (isAuthenticated) {
+      // Fetch from backend API
+      orderService
+        .getOrderById(orderId)
+        .then((ord) => {
+          if (ord) {
+            setOrder(ord);
+          } else {
+            setOrder(null);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching order:', err);
           setOrder(null);
-        }
-      })
-      .catch((err) => {
-        console.error('Error fetching order:', err);
-        setOrder(null);
-      })
-      .finally(() => setLoading(false));
-  }, [orderId]);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [orderId, authLoading, isAuthenticated, navigate]);
 
   const handleLogout = async () => {
     await logout();
@@ -68,14 +76,31 @@ export default function OrderDetailsPage() {
     })}`;
   };
 
+  const formatDate = (rawDate) => {
+    if (!rawDate) return 'Recent Order';
+    const parsed = new Date(rawDate);
+    if (isNaN(parsed.getTime())) {
+      return 'Recent Order';
+    }
+    return parsed.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   // Determine current step index for the tracker
   const getCurrentStepIndex = (status) => {
     switch (status) {
       case 'Delivered':
-        return 3;
+        return 4;
       case 'Shipped':
-        return 2;
+        return 3;
       case 'Processing':
+        return 2;
+      case 'Confirmed':
         return 1;
       case 'Pending':
       default:
@@ -83,7 +108,7 @@ export default function OrderDetailsPage() {
     }
   };
 
-  const currentStep = getCurrentStepIndex(order?.orderStatus || 'Processing');
+  const currentStep = getCurrentStepIndex(order?.orderStatus || order?.status || 'Pending');
 
   if (loading) {
     return (
@@ -112,9 +137,44 @@ export default function OrderDetailsPage() {
     );
   }
 
+  // Derive order values safely
+  const orderDate = order.createdAt || order.date || order.updatedAt;
+  const rawItems = Array.isArray(order.items) ? order.items : [];
+
+  // Normalize pricing values
+  const rawSubtotal =
+    order.pricing?.subtotal ??
+    order.subtotal ??
+    rawItems.reduce((acc, it) => acc + Number(it.price || it.unitPrice || 0) * Number(it.quantity || it.qty || 1), 0);
+
+  const rawShipping =
+    order.pricing?.shippingCharge ??
+    order.pricing?.shipping ??
+    order.shippingCharge ??
+    order.shipping ??
+    0;
+
+  const rawDiscount =
+    order.pricing?.discountAmount ??
+    order.pricing?.discount ??
+    order.discountAmount ??
+    order.discount ??
+    0;
+
+  const rawGrandTotal =
+    order.pricing?.grandTotal ??
+    order.grandTotal ??
+    order.totalAmount ??
+    order.total ??
+    (rawSubtotal + Number(rawShipping) - Number(rawDiscount));
+
+  const discountCode = order.pricing?.discountCode || order.discountCode;
+  const paymentStatus = order.paymentStatus || order.paymentDetails?.status || (order.paymentMethod === 'cod' ? 'PENDING' : 'PAID');
+  const isCancelled = (order.orderStatus || order.status) === 'Cancelled';
+
   return (
-    <div className="min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <div className="account-scope min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-[1200px] mx-auto">
         {/* Breadcrumb Header */}
         <div className="mb-8">
           <nav className="flex items-center space-x-2 text-xs text-stone-400 mb-2 font-medium">
@@ -135,18 +195,24 @@ export default function OrderDetailsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-heading font-medium text-stone-900">
-                Order #{order.orderId}
-              </h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-heading font-medium text-stone-900">
+                  Order #{order.orderId}
+                </h1>
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide border ${
+                    isCancelled
+                      ? 'bg-red-50 text-red-700 border-red-200'
+                      : (order.orderStatus || order.status) === 'Delivered'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-emerald-50 text-[#586c38] border-emerald-200'
+                  }`}
+                >
+                  {order.orderStatus || order.status || 'Confirmed'}
+                </span>
+              </div>
               <p className="text-xs text-stone-500 mt-1">
-                Placed on{' '}
-                {new Date(order.date).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                Placed on {formatDate(orderDate)}
               </p>
             </div>
             <Link
@@ -164,130 +230,297 @@ export default function OrderDetailsPage() {
 
           {/* Main Details Panel */}
           <div className="flex-1 w-full space-y-6">
-            {/* 1. ORDER TRACKING STATUS TIMELINE */}
-            <div className="bg-white border border-[#e5e5e5] rounded-lg p-6 sm:p-8 shadow-sm">
-              <h2 className="text-base font-heading font-semibold text-stone-900 mb-6">
-                Order Progress & Delivery Status
-              </h2>
+            {/* Cancel banner if cancelled or button if cancellable */}
+            {cancelMessage && (
+              <div className="p-4 rounded-lg bg-stone-100 border border-stone-300 text-sm text-stone-800">
+                {cancelMessage}
+              </div>
+            )}
 
-              <div className="relative">
-                {/* Horizontal progress bar for desktop */}
-                <div className="hidden sm:block absolute top-4 left-6 right-6 h-1 bg-stone-200 -z-0">
-                  <div
-                    className="h-full bg-[#586c38] transition-all duration-500"
-                    style={{
-                      width: `${(currentStep / (ORDER_STEPS.length - 1)) * 100}%`,
-                    }}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 sm:gap-2 relative z-10">
-                  {ORDER_STEPS.map((step, idx) => {
-                    const isCompleted = idx <= currentStep;
-                    const isCurrent = idx === currentStep;
-
-                    return (
-                      <div
-                        key={step.key}
-                        className="flex sm:flex-col items-center sm:text-center space-x-4 sm:space-x-0"
-                      >
-                        {/* Circle node */}
-                        <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shrink-0 mb-0 sm:mb-2 ${
-                            isCompleted
-                              ? 'bg-[#586c38] text-white shadow-sm'
-                              : 'bg-white border-2 border-stone-300 text-stone-400'
-                          } ${isCurrent ? 'ring-4 ring-[#586c38]/20' : ''}`}
-                        >
-                          {isCompleted ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            idx + 1
-                          )}
-                        </div>
-
-                        <div>
-                          <p
-                            className={`text-sm font-semibold ${
-                              isCompleted ? 'text-stone-900' : 'text-stone-400'
-                            }`}
-                          >
-                            {step.label}
-                          </p>
-                          <p className="text-xs text-stone-500 mt-0.5">{step.desc}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+            {isCancelled ? (
+              <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 flex items-start space-x-3">
+                <svg className="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <div>
+                  <p className="font-semibold text-red-900">This order has been cancelled</p>
+                  {order.cancellationReason && (
+                    <p className="text-xs text-red-700 mt-0.5">Reason: {order.cancellationReason}</p>
+                  )}
                 </div>
               </div>
-            </div>
+            ) : (
+              /* 1. ORDER TRACKING STATUS TIMELINE */
+              <div className="bg-white border border-[#e5e5e5] rounded-lg p-6 sm:p-8 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-base font-heading font-semibold text-stone-900">
+                    Order Progress & Delivery Status
+                  </h2>
+                  {['Pending', 'Confirmed'].includes(order.orderStatus || order.status) && (
+                    <button
+                      type="button"
+                      onClick={handleCancelOrder}
+                      disabled={cancelling}
+                      className="text-xs text-red-600 hover:text-red-700 font-medium underline disabled:opacity-50"
+                    >
+                      {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                    </button>
+                  )}
+                </div>
+
+                <div className="relative">
+                  {/* Horizontal progress bar for desktop */}
+                  <div className="hidden sm:block absolute top-4 left-6 right-6 h-1 bg-stone-200 -z-0">
+                    <div
+                      className="h-full bg-[#586c38] transition-all duration-500"
+                      style={{
+                        width: `${(currentStep / (ORDER_STEPS.length - 1)) * 100}%`,
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 sm:gap-2 relative z-10">
+                    {ORDER_STEPS.map((step, idx) => {
+                      const isCompleted = idx <= currentStep;
+                      const isCurrent = idx === currentStep;
+
+                      return (
+                        <div
+                          key={step.key}
+                          className="flex sm:flex-col items-center sm:text-center space-x-4 sm:space-x-0"
+                        >
+                          {/* Circle node */}
+                          <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-colors shrink-0 mb-0 sm:mb-2 ${
+                              isCompleted
+                                ? 'bg-[#586c38] text-white shadow-sm'
+                                : 'bg-white border-2 border-stone-300 text-stone-400'
+                            } ${isCurrent ? 'ring-4 ring-[#586c38]/20' : ''}`}
+                          >
+                            {isCompleted ? (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              idx + 1
+                            )}
+                          </div>
+
+                          <div>
+                            <p
+                              className={`text-sm font-semibold ${
+                                isCompleted ? 'text-stone-900' : 'text-stone-400'
+                              }`}
+                            >
+                              {step.label}
+                            </p>
+                            <p className="text-xs text-stone-500 mt-0.5">{step.desc}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 2. PURCHASED PRODUCTS TABLE */}
             <div className="bg-white border border-[#e5e5e5] rounded-lg p-6 sm:p-8 shadow-sm">
               <h2 className="text-base font-heading font-semibold text-stone-900 mb-6">
-                Purchased Products ({order.items?.length || 0})
+                Purchased Products ({rawItems.length})
               </h2>
 
-              <div className="space-y-4 divide-y divide-stone-100">
-                {order.items?.map((item, idx) => (
-                  <div
-                    key={item.key || idx}
-                    className="pt-4 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-16 h-16 object-cover rounded-md border border-stone-200 shrink-0"
-                      />
-                      <div>
-                        <Link
-                          to={item.url || `/products/${item.slug}`}
-                          className="font-medium text-stone-900 hover:text-[#586c38] text-sm line-clamp-1 transition"
-                        >
-                          {item.title}
-                        </Link>
-                        {item.variant && (
-                          <p className="text-xs text-stone-500 mt-0.5">Variant: {item.variant}</p>
-                        )}
-                        <p className="text-xs text-stone-600 mt-0.5">
-                          Unit Price: {formatPrice(item.price)}
-                        </p>
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left table-fixed">
+                  <thead>
+                    <tr className="border-b border-stone-200 text-xs font-semibold uppercase tracking-wider text-stone-500">
+                      <th className="pb-3 text-left w-1/2">Product</th>
+                      <th className="pb-3 text-right w-1/6">Unit Price</th>
+                      <th className="pb-3 text-center w-1/6">Qty</th>
+                      <th className="pb-3 text-right w-1/6">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {rawItems.map((item, idx) => {
+                      const itemName =
+                        item.name ||
+                        item.title ||
+                        item.productName ||
+                        item.product?.name ||
+                        item.product?.title ||
+                        'Ayurvedic Formulation';
+                      const itemPrice = Number(item.price ?? item.unitPrice ?? item.product?.price ?? 0);
+                      const itemQty = Number(item.quantity ?? item.qty ?? 1);
+                      const itemSubtotal = Number(item.subtotal ?? (itemPrice * itemQty));
+                      const rawImage =
+                        item.image ||
+                        (Array.isArray(item.images) && item.images[0]) ||
+                        item.primaryImage ||
+                        item.product?.primaryImage ||
+                        (Array.isArray(item.product?.images) && item.product?.images[0]) ||
+                        '/assets/images/prod-p2.jpg';
+                      const imageUrl = getProductImageUrl(rawImage);
+                      const itemSlug = item.slug || item.productId || item._id;
+                      const productLink = item.url || (itemSlug ? `/products/${itemSlug}` : null);
+
+                      return (
+                        <tr key={item.key || item.productId || idx} className="hover:bg-stone-50/50">
+                          {/* Product: Thumbnail + Name + Details */}
+                          <td className="py-5 pr-4 align-middle">
+                            <div className="flex items-center space-x-4">
+                              <img
+                                src={imageUrl}
+                                alt={itemName}
+                                className="w-20 h-20 min-w-20 min-h-20 sm:w-20 sm:h-20 sm:min-w-20 sm:min-h-20 object-cover rounded-lg border border-stone-200 shrink-0 bg-stone-50 shadow-xs"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = '/assets/images/prod-p2.jpg';
+                                }}
+                              />
+                              <div className="min-w-0 flex-1">
+                                {productLink ? (
+                                  <Link
+                                    to={productLink}
+                                    className="font-semibold text-stone-900 hover:text-[#586c38] text-base transition line-clamp-2 block leading-snug"
+                                  >
+                                    {itemName}
+                                  </Link>
+                                ) : (
+                                  <span className="font-semibold text-stone-900 text-base line-clamp-2 block leading-snug">
+                                    {itemName}
+                                  </span>
+                                )}
+                                {(item.sku || item.variant) && (
+                                  <div className="flex flex-wrap items-center gap-x-2 mt-1.5 text-xs text-stone-500">
+                                    {item.sku && <span>SKU: {item.sku}</span>}
+                                    {item.sku && item.variant && <span>•</span>}
+                                    {item.variant && <span>Variant: {item.variant}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-5 text-right align-middle font-medium text-stone-800 whitespace-nowrap text-base">
+                            {formatPrice(itemPrice)}
+                          </td>
+                          <td className="py-5 text-center align-middle font-medium text-stone-800 whitespace-nowrap text-base">
+                            {itemQty}
+                          </td>
+                          <td className="py-5 text-right align-middle font-bold text-stone-900 whitespace-nowrap text-base">
+                            {formatPrice(itemSubtotal)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card List View */}
+              <div className="sm:hidden space-y-4 divide-y divide-stone-100">
+                {rawItems.map((item, idx) => {
+                  const itemName =
+                    item.name ||
+                    item.title ||
+                    item.productName ||
+                    item.product?.name ||
+                    item.product?.title ||
+                    'Ayurvedic Formulation';
+                  const itemPrice = Number(item.price ?? item.unitPrice ?? item.product?.price ?? 0);
+                  const itemQty = Number(item.quantity ?? item.qty ?? 1);
+                  const itemSubtotal = Number(item.subtotal ?? (itemPrice * itemQty));
+                  const rawImage =
+                    item.image ||
+                    (Array.isArray(item.images) && item.images[0]) ||
+                    item.primaryImage ||
+                    item.product?.primaryImage ||
+                    (Array.isArray(item.product?.images) && item.product?.images[0]) ||
+                    '/assets/images/prod-p2.jpg';
+                  const imageUrl = getProductImageUrl(rawImage);
+                  const itemSlug = item.slug || item.productId || item._id;
+                  const productLink = item.url || (itemSlug ? `/products/${itemSlug}` : null);
+
+                  return (
+                    <div
+                      key={item.key || item.productId || idx}
+                      className="pt-4 first:pt-0 flex flex-col gap-3"
+                    >
+                      <div className="flex items-start space-x-3.5">
+                        <img
+                          src={imageUrl}
+                          alt={itemName}
+                          className="w-20 h-20 min-w-20 min-h-20 object-cover rounded-lg border border-stone-200 shrink-0 bg-stone-50 shadow-xs"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/images/prod-p2.jpg';
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          {productLink ? (
+                            <Link
+                              to={productLink}
+                              className="font-semibold text-stone-900 hover:text-[#586c38] text-[15px] block leading-snug line-clamp-2"
+                            >
+                              {itemName}
+                            </Link>
+                          ) : (
+                            <span className="font-semibold text-stone-900 text-[15px] block leading-snug line-clamp-2">
+                              {itemName}
+                            </span>
+                          )}
+                          {(item.sku || item.variant) && (
+                            <div className="flex flex-wrap items-center gap-x-2 mt-1.5 text-xs text-stone-500">
+                              {item.sku && <span>SKU: {item.sku}</span>}
+                              {item.sku && item.variant && <span>•</span>}
+                              {item.variant && <span>Variant: {item.variant}</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bottom badge row: Price, Qty & Subtotal */}
+                      <div className="flex items-center justify-between text-xs bg-stone-50/80 p-3 rounded-lg border border-stone-100">
+                        <div className="flex items-center space-x-3 text-stone-600">
+                          <span>Price: <strong className="text-stone-800 font-semibold">{formatPrice(itemPrice)}</strong></span>
+                          <span>•</span>
+                          <span>Qty: <strong className="text-stone-800 font-semibold">{itemQty}</strong></span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-stone-500 mr-1.5">Subtotal:</span>
+                          <strong className="font-bold text-stone-900 text-sm">
+                            {formatPrice(itemSubtotal)}
+                          </strong>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between sm:justify-end sm:space-x-8 text-sm">
-                      <span className="text-xs text-stone-500">Qty: {item.quantity}</span>
-                      <span className="font-semibold text-stone-900">
-                        {formatPrice(item.price * item.quantity)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Price Calculation breakdown */}
-              <div className="mt-8 pt-6 border-t border-stone-200 max-w-sm ml-auto space-y-2 text-sm text-stone-600">
+              <div className="mt-8 pt-6 border-t border-stone-200 max-w-sm ml-auto space-y-2.5 text-sm text-stone-600">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(order.pricing?.subtotal)}</span>
+                  <span>Items Subtotal</span>
+                  <span className="font-medium text-stone-800">{formatPrice(rawSubtotal)}</span>
                 </div>
-                {order.pricing?.discount > 0 && (
+                {Number(rawDiscount) > 0 && (
                   <div className="flex justify-between text-[#586c38] font-medium">
-                    <span>Discount ({order.pricing?.discountCode})</span>
-                    <span>-{formatPrice(order.pricing?.discount)}</span>
+                    <span>Discount {discountCode ? `(${discountCode})` : ''}</span>
+                    <span>-{formatPrice(rawDiscount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span className="text-[#586c38] font-medium">Free</span>
+                  <span>Shipping Fee</span>
+                  {Number(rawShipping) === 0 ? (
+                    <span className="text-[#586c38] font-medium">Free</span>
+                  ) : (
+                    <span className="font-medium text-stone-800">{formatPrice(rawShipping)}</span>
+                  )}
                 </div>
                 <div className="flex justify-between font-bold text-stone-900 text-base pt-3 border-t border-stone-200">
-                  <span>Total Paid</span>
-                  <span>{formatPrice(order.pricing?.grandTotal)}</span>
+                  <span>Grand Total</span>
+                  <span className="text-lg text-[#2f3e10]">{formatPrice(rawGrandTotal)}</span>
                 </div>
               </div>
             </div>
@@ -296,10 +529,14 @@ export default function OrderDetailsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Delivery Address */}
               <div className="bg-white border border-[#e5e5e5] rounded-lg p-6 shadow-sm text-sm">
-                <h3 className="font-heading font-semibold text-stone-900 mb-3 text-base">
-                  Delivery Address
+                <h3 className="font-heading font-semibold text-stone-900 mb-3 text-base flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-[#586c38]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Delivery Address</span>
                 </h3>
-                <p className="font-medium text-stone-800">
+                <p className="font-semibold text-stone-800">
                   {order.shippingAddress?.firstName} {order.shippingAddress?.lastName}
                 </p>
                 <p className="text-stone-600 mt-1">{order.shippingAddress?.address}</p>
@@ -311,34 +548,54 @@ export default function OrderDetailsPage() {
                   {order.shippingAddress?.pincode}
                 </p>
                 <p className="text-stone-600">{order.shippingAddress?.country || 'India'}</p>
-                <p className="text-stone-600 mt-2 text-xs">
-                  <span className="font-medium text-stone-700">Contact:</span>{' '}
-                  {order.shippingAddress?.phone}
-                </p>
+                {order.shippingAddress?.phone && (
+                  <p className="text-stone-600 mt-2 text-xs">
+                    <span className="font-medium text-stone-700">Phone:</span>{' '}
+                    {order.shippingAddress?.phone}
+                  </p>
+                )}
+                {order.shippingAddress?.email && (
+                  <p className="text-stone-600 text-xs">
+                    <span className="font-medium text-stone-700">Email:</span>{' '}
+                    {order.shippingAddress?.email}
+                  </p>
+                )}
               </div>
 
               {/* Payment Details */}
               <div className="bg-white border border-[#e5e5e5] rounded-lg p-6 shadow-sm text-sm">
-                <h3 className="font-heading font-semibold text-stone-900 mb-3 text-base">
-                  Payment Information
+                <h3 className="font-heading font-semibold text-stone-900 mb-3 text-base flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-[#586c38]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <span>Payment & Dispatch</span>
                 </h3>
                 <p className="text-stone-600">
-                  <span className="font-medium text-stone-800">Method:</span> {order.paymentMethod}
-                </p>
-                <p className="text-stone-600 mt-1">
-                  <span className="font-medium text-stone-800">Payment Status:</span>{' '}
-                  <span className="text-[#586c38] font-semibold">
-                    {order.paymentDetails?.status || 'PAID'}
+                  <span className="font-medium text-stone-800">Payment Method:</span>{' '}
+                  <span className="uppercase font-semibold text-stone-700">
+                    {order.paymentMethod || 'Online'}
                   </span>
                 </p>
-                {order.paymentDetails?.razorpay_payment_id && (
-                  <p className="text-xs text-stone-500 mt-1 font-mono">
-                    Transaction ID: {order.paymentDetails.razorpay_payment_id}
+                <p className="text-stone-600 mt-1.5">
+                  <span className="font-medium text-stone-800">Payment Status:</span>{' '}
+                  <span
+                    className={`font-semibold px-2 py-0.5 rounded text-xs ml-1 ${
+                      paymentStatus.toUpperCase() === 'COMPLETED' || paymentStatus.toUpperCase() === 'PAID'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {paymentStatus}
+                  </span>
+                </p>
+                {(order.paymentDetails?.razorpayPaymentId || order.paymentDetails?.razorpay_payment_id) && (
+                  <p className="text-xs text-stone-500 mt-2 font-mono">
+                    Gateway ID: {order.paymentDetails.razorpayPaymentId || order.paymentDetails.razorpay_payment_id}
                   </p>
                 )}
                 <p className="text-stone-600 mt-2 text-xs">
                   <span className="font-medium text-stone-800">Shipping Courier:</span>{' '}
-                  {order.shippingMethod || 'Standard Express'}
+                  {order.shippingMethod || 'Kerala Ayurvedic Standard Express'}
                 </p>
               </div>
             </div>
@@ -348,4 +605,3 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
-

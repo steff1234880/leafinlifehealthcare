@@ -298,9 +298,16 @@ export async function createOrder(req, res, next) {
 export async function getUserOrders(req, res, next) {
   try {
     const userId = req.user.id;
+    const userEmail = (req.user.email || '').trim().toLowerCase();
 
     if (isDbConnected()) {
-      const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+      const query = {
+        $or: [
+          { userId },
+          ...(userEmail ? [{ 'shippingAddress.email': userEmail }] : []),
+        ],
+      };
+      const orders = await Order.find(query).sort({ createdAt: -1 });
       return res.status(200).json({
         success: true,
         count: orders.length,
@@ -308,7 +315,7 @@ export async function getUserOrders(req, res, next) {
       });
     }
 
-    const orders = orderStore.getUserOrders(userId);
+    const orders = orderStore.getUserOrders(userId, userEmail);
     return res.status(200).json({
       success: true,
       count: orders.length,
@@ -350,7 +357,11 @@ export async function getOrderById(req, res, next) {
     }
 
     // Ensure user is authorized to view this order
-    if (!isAdmin && String(order.userId) !== String(userId)) {
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+    const orderEmail = (order.shippingAddress?.email || order.customer?.emailOrPhone || '').trim().toLowerCase();
+    const isOwner = String(order.userId) === String(userId) || (userEmail && orderEmail === userEmail);
+
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({
         success: false,
         message: 'Access denied: You are not authorized to view this order',
@@ -398,7 +409,11 @@ export async function cancelOrder(req, res, next) {
     }
 
     // Ensure user is authorized
-    if (!isAdmin && String(order.userId) !== String(userId)) {
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+    const orderEmail = (order.shippingAddress?.email || order.customer?.emailOrPhone || '').trim().toLowerCase();
+    const isOwner = String(order.userId) === String(userId) || (userEmail && orderEmail === userEmail);
+
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({
         success: false,
         message: 'Access denied: You are not authorized to cancel this order',

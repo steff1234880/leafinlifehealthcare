@@ -1,0 +1,82 @@
+{
+  "orders": [
+    {
+      "orderId": "LIL-1795232687007-9219",
+      "userId": "usr_demo_1",
+      "items": [
+        {
+          "productId": "1795168567908",
+          "name": "Persistent Tonic 1795168567908",
+          "sku": "PER-SKU-7908",
+          "image": "",
+          "price": 300,
+          "quantity": 1,
+          "subtotal": 300
+        }
+      ],
+      "shippingAddress": {
+        "firstName": "Test",
+        "lastName": "Customer",
+        "email": "demo@leafinlifehealthcare.com",
+        "phone": "9876543210",
+        "address": "123 Main St",
+        "apartment": "",
+        "city": "Kochi",
+        "state": "Kerala",
+        "pincode": "682001",
+        "country": "India"
+      },
+      "pricing": {
+        "subtotal": 300,
+        "shippingCharge": 50,
+        "discountAmount": 0,
+        "grandTotal": 350
+      },
+      "paymentMethod": "cod",
+      "paymentStatus": "Pending",
+      "orderStatus": "Confirmed",
+      "createdAt": "2026-11-21T03:44:47.007Z",
+      "updatedAt": "2026-11-21T03:44:47.007Z"
+    },
+    {
+      "orderId": "LIL-1795232809542-8673",
+      "userId": "usr_1795195553044_931",
+      "items": [
+        {
+          "productId": "7736655347806",
+          "name": "Sukh Bodycare Roll On",
+          "sku": "LIL-SR-1004",
+          "image": "/assets/images/prod-p5.jpg",
+          "price": 50,
+          "quantity": 1,
+          "subtotal": 50
+        }
+      ],
+      "shippingAddress": {
+        "firstName": "Stefin",
+        "lastName": "Saji",
+        "email": "stefinsaji26@gmail.com",
+        "phone": "08590192709",
+        "address": "uounonojnoj",
+        "apartment": "ljnjlnjln",
+        "city": "bathery",
+        "state": "Kerala",
+        "pincode": "673592",
+        "country": "India"
+      },
+      "pricing": {
+        "subtotal": 50,
+        "shippingCharge": 50,
+        "discountAmount": 0,
+        "grandTotal": 100
+      },
+      "paymentMethod": "cod",
+      "paymentStatus": "Pending",
+      "orderStatus": "Shipped",
+      "createdAt": "2026-11-21T03:46:49.542Z",
+      "updatedAt": "2026-11-21T03:47:23.309Z"
+    }
+  ],
+  "processedPayments": [],
+  "updatedAt": "2026-11-21T03:47:23.309Z"
+}

@@ -1,8 +1,36 @@
 import { Category } from '../models/Category.js';
+import { Product } from '../models/Product.js';
 import { productStore } from '../models/ProductStore.js';
 import mongoose from 'mongoose';
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
+
+/**
+ * Helper to compute product count for a category using relationship/ID/slug
+ */
+const countProductsForCategory = (cat, allProducts) => {
+  const catId = String(cat._id || cat.id || '');
+  const catSlug = String(cat.slug || '').trim().toLowerCase();
+  const catName = String(cat.name || '').trim().toLowerCase();
+
+  return allProducts.filter((p) => {
+    if (!p) return false;
+    // 1. Direct category ID match
+    if (p.categoryId && String(p.categoryId) === catId) return true;
+    if (p.category && String(p.category) === catId) return true;
+
+    // 2. Slug or name relation match
+    const pCat = String(p.category || '').trim().toLowerCase();
+    if (pCat && (pCat === catSlug || pCat === catName)) return true;
+
+    // Also match normalized variants (e.g. "ayurvedic-drops" vs "Ayurvedic Drops")
+    const norm = (s) => s.replace(/[^a-z0-9]/g, '');
+    if (pCat && norm(pCat) === norm(catSlug)) return true;
+    if (pCat && norm(pCat) === norm(catName)) return true;
+
+    return false;
+  }).length;
+};
 
 /**
  * @desc    Get all categories (public)
@@ -12,21 +40,40 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 export const getCategories = async (req, res, next) => {
   try {
     if (isDbConnected()) {
-      const categories = await Category.find({ isActive: true }).sort({ name: 1 });
+      const [categories, products] = await Promise.all([
+        Category.find({ isActive: true }).sort({ name: 1 }).lean(),
+        Product.find({}).select('category categoryId status').lean(),
+      ]);
+
+      const categoriesWithCount = categories.map((cat) => ({
+        ...cat,
+        productCount: countProductsForCategory(cat, products),
+      }));
+
       return res.status(200).json({
         success: true,
-        count: categories.length,
-        categories,
+        count: categoriesWithCount.length,
+        categories: categoriesWithCount,
       });
     }
 
     const categories = await productStore.getCategories();
+    const allProducts = productStore.products || [];
     // Only return active categories for public requests
     const activeOnly = categories.filter((c) => c.isActive !== false);
+
+    const categoriesWithCount = activeOnly.map((cat) => {
+      const catObj = cat.toObject ? cat.toObject() : { ...cat };
+      return {
+        ...catObj,
+        productCount: countProductsForCategory(catObj, allProducts),
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      count: activeOnly.length,
-      categories: activeOnly,
+      count: categoriesWithCount.length,
+      categories: categoriesWithCount,
     });
   } catch (error) {
     next(error);
@@ -45,10 +92,10 @@ export const getCategoryById = async (req, res, next) => {
     if (isDbConnected()) {
       let category = null;
       if (mongoose.isValidObjectId(id)) {
-        category = await Category.findById(id);
+        category = await Category.findById(id).lean();
       }
       if (!category) {
-        category = await Category.findOne({ slug: id.toLowerCase() });
+        category = await Category.findOne({ slug: id.toLowerCase() }).lean();
       }
       if (!category) {
         return res.status(404).json({
@@ -56,9 +103,16 @@ export const getCategoryById = async (req, res, next) => {
           message: `Category not found with ID or slug '${id}'`,
         });
       }
+
+      const products = await Product.find({}).select('category categoryId status').lean();
+      const productCount = countProductsForCategory(category, products);
+
       return res.status(200).json({
         success: true,
-        category,
+        category: {
+          ...category,
+          productCount,
+        },
       });
     }
 
@@ -70,9 +124,16 @@ export const getCategoryById = async (req, res, next) => {
       });
     }
 
+    const catObj = category.toObject ? category.toObject() : { ...category };
+    const allProducts = productStore.products || [];
+    const productCount = countProductsForCategory(catObj, allProducts);
+
     return res.status(200).json({
       success: true,
-      category,
+      category: {
+        ...catObj,
+        productCount,
+      },
     });
   } catch (error) {
     next(error);

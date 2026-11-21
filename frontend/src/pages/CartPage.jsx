@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/common/ProductCard';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { productService, cartService } from '../services/api';
 import { initialProducts } from '../data/homeData';
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const {
     cart,
     cartSubtotal,
+    loadingCart,
     updateCartItemQuantity,
     removeFromCart,
     syncCartPrices,
@@ -188,7 +191,12 @@ export default function CartPage() {
 
       {/* 2. Cart Items & Cart Footer Section (`.page-width` max-width 1200px as in `cart.html`) */}
       <section className="max-w-[1200px] mx-auto px-[1.5rem] sm:px-[3rem] pt-[60px] pb-[40px] md:pt-[80px] md:pb-[60px]">
-        {isEmpty ? (
+        {loadingCart && cart.length === 0 ? (
+          <div className="py-24 text-center">
+            <div className="w-10 h-10 border-3 border-[#586c38] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-stone-600 text-[1.6rem] font-medium">Loading your shopping cart...</p>
+          </div>
+        ) : isEmpty ? (
           /* Empty Cart State (`.cart__warnings`) */
           <div className="cart__warnings text-center py-[3rem] md:py-[5rem]">
             <h1 className="cart__empty-text m-0 mb-[2.5rem] md:mb-[3rem] font-heading text-[2.8rem] sm:text-[3.6rem] font-medium text-black">
@@ -202,19 +210,35 @@ export default function CartPage() {
               Continue shopping
             </Link>
 
-            <h2 className="cart__login-title m-0 mt-[5.5rem] mb-[0.5rem] font-heading text-[2.2rem] sm:text-[2.4rem] font-medium text-black">
-              Have an account?
-            </h2>
-            <p className="cart__login-paragraph m-0 mt-[0.8rem] text-[1.6rem] text-black/80">
-              <button
-                type="button"
-                onClick={() => setIsLoginOpen(true)}
-                className="bg-transparent border-0 p-0 text-[1.6rem] text-black underline hover:text-[#2f3e10] cursor-pointer font-body"
-              >
-                Log in
-              </button>{' '}
-              to check out faster.
-            </p>
+            {!isAuthenticated ? (
+              <>
+                <h2 className="cart__login-title m-0 mt-[5.5rem] mb-[0.5rem] font-heading text-[2.2rem] sm:text-[2.4rem] font-medium text-black">
+                  Have an account?
+                </h2>
+                <p className="cart__login-paragraph m-0 mt-[0.8rem] text-[1.6rem] text-black/80">
+                  <button
+                    type="button"
+                    onClick={() => setIsLoginOpen(true)}
+                    className="bg-transparent border-0 p-0 text-[1.6rem] text-black underline hover:text-[#2f3e10] cursor-pointer font-body"
+                  >
+                    Log in
+                  </button>{' '}
+                  to check out faster.
+                </p>
+              </>
+            ) : (
+              <div className="mt-[4rem] text-[1.5rem] text-stone-600">
+                <span>Logged in as </span>
+                <span className="font-semibold text-stone-900">{user?.name || user?.email}</span>
+                <span className="mx-2">•</span>
+                <Link
+                  to="/account"
+                  className="text-[#586c38] font-medium hover:underline inline-flex items-center"
+                >
+                  View Account Dashboard →
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           /* Active Cart Contents & Footer */

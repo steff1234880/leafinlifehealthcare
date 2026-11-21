@@ -25,6 +25,7 @@ import OrderDetailsPage from './pages/OrderDetailsPage';
 import AboutUsPage from './pages/AboutUsPage';
 import BlogListPage from './pages/BlogListPage';
 import BlogDetailsPage from './pages/BlogDetailsPage';
+import WishlistPage from './pages/WishlistPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 
 // Admin Panel Components & Pages
@@ -70,7 +71,8 @@ function StoreLayout() {
           <Route path="/blogs" element={<BlogListPage />} />
           <Route path="/blog" element={<BlogListPage />} />
           <Route path="/pages/contact" element={<PlaceholderPage title="Contact Us" />} />
-          <Route path="/pages/wishlist" element={<PlaceholderPage title="My Wishlist" />} />
+          <Route path="/pages/wishlist" element={<WishlistPage />} />
+          <Route path="/account/wishlist" element={<WishlistPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />

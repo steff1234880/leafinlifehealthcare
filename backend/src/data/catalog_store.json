@@ -1,0 +1,204 @@
+{
+  "categories": [
+    {
+      "_id": "cat-ayurvedic-drops",
+      "name": "Ayurvedic Drops",
+      "slug": "ayurvedic-drops",
+      "description": "Authentic Ayurvedic drops for respiratory, sinus, and migraine wellness.",
+      "image": "/assets/images/cat-drops.jpg",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "_id": "cat-ayurvedic-oils",
+      "name": "Ayurvedic Oils",
+      "slug": "ayurvedic-oils",
+      "description": "Herbal medicated thailams and oils for body care and pain relief.",
+      "image": "/assets/images/cat-oils.jpg",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "_id": "cat-ayurvedic-tablets",
+      "name": "Ayurvedic Tablets",
+      "slug": "ayurvedic-tablets",
+      "description": "Traditional Ayurvedic gulikas and tablets for digestive balance and vitality.",
+      "image": "/assets/images/cat-tablets.jpg",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "_id": "cat-ayurvedic-roll-on",
+      "name": "Ayurvedic Roll On",
+      "slug": "ayurvedic-roll-on",
+      "description": "Convenient pocket roll-on herbal formulations for on-the-go headache & pain relief.",
+      "image": "/assets/images/cat-roll-on.jpg",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "_id": "cat-1795168567901-ng8mr",
+      "name": "Persistent Health 1795168567901",
+      "slug": "persistent-health-1795168567901",
+      "description": "Desc",
+      "image": "",
+      "isActive": true,
+      "createdAt": "2026-11-20T09:56:07.901Z",
+      "updatedAt": "2026-11-20T09:56:07.901Z"
+    }
+  ],
+  "products": [
+    {
+      "_id": "7362954788958",
+      "name": "Bashpika Thulasi Premium Bottle",
+      "slug": "bashpika-thulasi-7ml",
+      "description": "Bashpika Thulasi Premium Bottle by Leaf in Life Healthcare is a trusted Ayurvedic formulation for migraine care, made with 100% natural Ayurvedic ingredients. It supports comfort from migraine headaches and common concerns such as cold, sinus discomfort and seasonal allergies.",
+      "price": 112.5,
+      "discountPrice": 105,
+      "comparePrice": 125,
+      "images": [
+        "/assets/images/prod-p2.jpg",
+        "/assets/images/prod-pp2.jpg",
+        "/assets/images/prod-p2-g3.jpg",
+        "/assets/images/prod-p2-g4.jpg",
+        "/assets/images/prod-p2-g5.jpg"
+      ],
+      "category": "Ayurvedic Drops",
+      "stock": 50,
+      "sku": "LIL-BT-1000",
+      "status": "active",
+      "createdAt": "2024-03-15T10:00:00.000Z",
+      "updatedAt": "2026-11-20T13:28:38.125Z"
+    },
+    {
+      "_id": "7362149449822",
+      "name": "Sarvanga Thailam",
+      "slug": "sarvanga-thailam",
+      "description": "Sarvanga Thailam is a traditional Ayurvedic medicated oil crafted with time-tested herbs for whole body massage, relieving muscular stiffness, fatigue, and supporting joint flexibility.",
+      "price": 150,
+      "discountPrice": 135,
+      "comparePrice": 165,
+      "images": [
+        "/assets/images/prod-p1.jpg",
+        "/assets/images/prod-pp1.jpg"
+      ],
+      "category": "Ayurvedic Oils",
+      "stock": 42,
+      "sku": "LIL-ST-1001",
+      "status": "active",
+      "createdAt": "2024-03-14T10:00:00.000Z",
+      "updatedAt": "2026-11-21T03:19:07.190Z"
+    },
+    {
+      "_id": "7372488540254",
+      "name": "Sukh Bodycare Oil",
+      "slug": "sukh-bodycare-oil-1",
+      "description": "Sukh Bodycare Oil provides soothing natural nourishment for sensitive and stressed skin, formulated with nourishing herbal extracts to restore natural vitality.",
+      "price": 180,
+      "discountPrice": 160,
+      "comparePrice": 200,
+      "images": [
+        "/assets/images/prod-p3.jpg",
+        "/assets/images/prod-pp3.jpg"
+      ],
+      "category": "Ayurvedic Oils",
+      "stock": 30,
+      "sku": "LIL-SB-1002",
+      "status": "active",
+      "createdAt": "2024-03-13T10:00:00.000Z",
+      "updatedAt": "2024-03-13T10:00:00.000Z"
+    },
+    {
+      "_id": "7362947743838",
+      "name": "Ashtamrutham Lite Vayugulika",
+      "slug": "ashtamrutham-vayugulika",
+      "description": "Ashtamrutham Lite Vayugulika is an authentic Ayurvedic formulation designed to support healthy digestion, alleviate abdominal bloating, gas, and digestive discomfort.",
+      "price": 30,
+      "discountPrice": null,
+      "images": [
+        "/assets/images/prod-p4.jpg",
+        "/assets/images/prod-pp4.jpg"
+      ],
+      "category": "Ayurvedic Tablets",
+      "stock": 120,
+      "sku": "LIL-AV-1003",
+      "status": "active",
+      "createdAt": "2024-03-12T10:00:00.000Z",
+      "updatedAt": "2024-03-12T10:00:00.000Z"
+    },
+    {
+      "_id": "7736655347806",
+      "name": "Sukh Bodycare Roll On",
+      "slug": "sukh-bodycare-oil-roll-on",
+      "description": "Convenient travel-size herbal roll on for quick application on temples, neck, and pulse points to ease headache, tension, and sinus pressure.",
+      "price": 50,
+      "discountPrice": null,
+      "images": [
+        "/assets/images/prod-p5.jpg",
+        "/assets/images/prod-pp5.jpg"
+      ],
+      "category": "Ayurvedic Roll On",
+      "stock": 79,
+      "sku": "LIL-SR-1004",
+      "status": "active",
+      "createdAt": "2024-03-11T10:00:00.000Z",
+      "updatedAt": "2026-11-21T03:46:49.545Z"
+    },
+    {
+      "_id": "7736673501278",
+      "name": "Ashtamrutham Vayugulika",
+      "slug": "ashtamrutham-vayugulika-copy",
+      "description": "Classical Vayugulika preparation for acute gastric relief, nausea, and digestive equilibrium according to classical Kerala Ayurvedic texts.",
+      "price": 10,
+      "discountPrice": null,
+      "images": [
+        "/assets/images/prod-p4.jpg"
+      ],
+      "category": "Ayurvedic Tablets",
+      "stock": 150,
+      "sku": "LIL-AV-1005",
+      "status": "active",
+      "createdAt": "2024-03-10T10:00:00.000Z",
+      "updatedAt": "2024-03-10T10:00:00.000Z"
+    },
+    {
+      "_id": "7362182611038",
+      "name": "Bashpika Thulasi Standard",
+      "slug": "bashpika-thulasi-premium-bottle",
+      "description": "Standard pack of pure steam-distilled Thulasi extract drops for steam inhalation, immunity support, and throat comfort.",
+      "price": 95,
+      "discountPrice": 85,
+      "comparePrice": 110,
+      "images": [
+        "/assets/images/prod-p2.jpg"
+      ],
+      "category": "Ayurvedic Drops",
+      "stock": 60,
+      "sku": "LIL-BT-1006",
+      "status": "active",
+      "createdAt": "2024-03-09T10:00:00.000Z",
+      "updatedAt": "2024-03-09T10:00:00.000Z"
+    },
+    {
+      "_id": "1795168567908",
+      "name": "Persistent Tonic 1795168567908",
+      "slug": "persistent-tonic-1795168567908",
+      "description": "",
+      "price": 300,
+      "discountPrice": null,
+      "comparePrice": null,
+      "images": [],
+      "category": "Persistent Health 1795168567901",
+      "stock": 48,
+      "sku": "PER-SKU-7908",
+      "status": "active",
+      "createdAt": "2026-11-20T09:56:07.908Z",
+      "updatedAt": "2026-11-21T03:44:47.009Z"
+    }
+  ],
+  "updatedAt": "2026-11-21T03:46:49.545Z"
+}

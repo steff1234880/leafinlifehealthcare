@@ -4,7 +4,14 @@ import { useAuth } from '../context/AuthContext';
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
+
+  // If already authenticated, redirect to Profile
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/account', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Form states
   const [formData, setFormData] = useState({

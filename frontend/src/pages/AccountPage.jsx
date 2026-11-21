@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function AccountPage() {
   const navigate = useNavigate();
-  const { user, updateProfile, logout } = useAuth();
+  const { user, loading, isAuthenticated, updateProfile, logout } = useAuth();
 
   const [recentOrders, setRecentOrders] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +22,12 @@ export default function AccountPage() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // If finished loading and not authenticated, redirect to sign in
+    if (!loading && !isAuthenticated) {
+      navigate('/account/login');
+      return;
+    }
 
     if (user) {
       setFormData({
@@ -40,7 +46,7 @@ export default function AccountPage() {
       console.warn('Could not load user recent orders:', err);
       setRecentOrders([]);
     });
-  }, [user]);
+  }, [user, loading, isAuthenticated, navigate]);
 
   const handleLogout = async () => {
     await logout();
@@ -121,8 +127,8 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <div className="account-scope min-h-screen bg-[#fafafa] py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-[1200px] mx-auto">
         {/* Breadcrumb Header */}
         <div className="mb-8">
           <nav className="flex items-center space-x-2 text-xs text-stone-400 mb-2 font-medium">

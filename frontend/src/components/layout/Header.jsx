@@ -1,10 +1,13 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { navigationLinks } from '../../data/homeData';
 import { useStore } from '../../context/StoreContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const {
     cartCount,
     setIsSearchOpen,
@@ -12,6 +15,14 @@ export default function Header() {
     isMobileMenuOpen,
     setIsMobileMenuOpen,
   } = useStore();
+
+  const handleProfileClick = () => {
+    if (isAuthenticated) {
+      navigate('/account');
+    } else {
+      setIsLoginOpen(true);
+    }
+  };
 
   return (
     <>
@@ -163,12 +174,15 @@ export default function Header() {
                     )}
                   </Link>
 
-                  {/* Account Icon (visible >= 1220px) */}
+                  {/* Account / Profile Icon (visible >= 1220px) */}
                   <button
                     type="button"
-                    onClick={() => setIsLoginOpen(true)}
-                    aria-label="Log in"
-                    className="hidden xl:flex w-[2.3rem] h-[2.3rem] items-center justify-center text-black hover:text-[#2f3e10] transition-colors bg-transparent border-0 p-0 cursor-pointer"
+                    onClick={handleProfileClick}
+                    aria-label={isAuthenticated ? 'My Profile' : 'Log in'}
+                    title={isAuthenticated ? `Logged in as ${user?.name || 'Customer'}` : 'Sign in'}
+                    className={`hidden xl:flex w-[2.3rem] h-[2.3rem] items-center justify-center transition-colors bg-transparent border-0 p-0 cursor-pointer ${
+                      isAuthenticated ? 'text-[#729855] hover:text-[#2f3e10]' : 'text-black hover:text-[#2f3e10]'
+                    }`}
                   >
                     <svg
                       width="28"
@@ -252,9 +266,11 @@ export default function Header() {
                 type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  setIsLoginOpen(true);
+                  handleProfileClick();
                 }}
-                className="inline-flex items-center text-[1.4rem] text-black bg-transparent border-0 p-0 cursor-pointer"
+                className={`inline-flex items-center text-[1.4rem] bg-transparent border-0 p-0 cursor-pointer ${
+                  isAuthenticated ? 'text-[#729855] font-medium' : 'text-black'
+                }`}
               >
                 <svg
                   width="28"
@@ -279,7 +295,7 @@ export default function Header() {
                     strokeLinejoin="round"
                   />
                 </svg>
-                Log in
+                {isAuthenticated ? (user?.name || 'My Profile') : 'Log in'}
               </button>
               <ul className="flex items-center list-none m-0 p-0 gap-[1.5rem]">
                 <li>

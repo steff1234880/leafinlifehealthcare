@@ -1,0 +1,44 @@
+{
+  "usr_1795195553044_931": {
+    "userId": "usr_1795195553044_931",
+    "items": [
+      {
+        "productId": "7372488540254",
+        "_id": "7372488540254",
+        "id": "7372488540254",
+        "title": "Sukh Bodycare Oil",
+        "name": "Sukh Bodycare Oil",
+        "slug": "sukh-bodycare-oil-1",
+        "image": "/assets/images/prod-p3.jpg",
+        "primaryImage": "/assets/images/prod-p3.jpg",
+        "price": 160,
+        "comparePrice": 200,
+        "inStock": true,
+        "addedAt": "2026-11-20T19:54:44.231Z"
+      }
+    ],
+    "createdAt": "2026-11-20T19:54:35.609Z",
+    "updatedAt": "2026-11-20T19:54:44.231Z"
+  },
+  "usr_admin_1": {
+    "userId": "usr_admin_1",
+    "items": [
+      {
+        "productId": "1795168567908",
+        "_id": "1795168567908",
+        "id": "1795168567908",
+        "title": "Persistent Tonic 1795168567908",
+        "name": "Persistent Tonic 1795168567908",
+        "slug": "persistent-tonic-1795168567908",
+        "image": "",
+        "primaryImage": "",
+        "price": 300,
+        "comparePrice": null,
+        "inStock": true,
+        "addedAt": "2026-11-20T19:56:31.151Z"
+      }
+    ],
+    "createdAt": "2026-11-20T19:56:31.149Z",
+    "updatedAt": "2026-11-20T19:56:31.151Z"
+  }
+}

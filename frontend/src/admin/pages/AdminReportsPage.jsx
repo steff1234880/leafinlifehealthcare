@@ -29,7 +29,7 @@ export default function AdminReportsPage() {
     orders.forEach((ord) => {
       if (ord.orderStatus !== 'Cancelled') {
         ord.items?.forEach((item) => {
-          const key = item.title || 'Product';
+          const key = item.name || item.title || item.productName || 'Ayurvedic Product';
           const qty = Number(item.quantity) || 1;
           const rev = (Number(item.price) || 0) * qty;
 
@@ -40,6 +40,7 @@ export default function AdminReportsPage() {
           } else {
             map.set(key, {
               title: key,
+              name: key,
               image: item.image,
               units: qty,
               revenue: rev,
@@ -72,23 +73,23 @@ export default function AdminReportsPage() {
   }, [orders]);
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans text-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-heading font-bold text-stone-900">
             Sales & Analytics Reports
           </h1>
-          <p className="text-xs text-stone-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             Revenue breakdown, payment modes, and best-performing Ayurvedic products
           </p>
         </div>
 
         {/* Timeframe pill selector */}
-        <div className="inline-flex rounded-lg border border-stone-200 bg-white p-1 text-xs">
+        <div className="inline-flex rounded-lg border border-stone-200 bg-white p-1 text-sm">
           <button
             type="button"
             onClick={() => setTimeframe('week')}
-            className={`px-3 py-1.5 rounded-md font-semibold transition ${
+            className={`px-3 py-1.5 rounded-md font-semibold transition text-sm ${
               timeframe === 'week' ? 'bg-[#2f3e10] text-white' : 'text-stone-600 hover:text-black'
             }`}
           >
@@ -97,7 +98,7 @@ export default function AdminReportsPage() {
           <button
             type="button"
             onClick={() => setTimeframe('month')}
-            className={`px-3 py-1.5 rounded-md font-semibold transition ${
+            className={`px-3 py-1.5 rounded-md font-semibold transition text-sm ${
               timeframe === 'month' ? 'bg-[#2f3e10] text-white' : 'text-stone-600 hover:text-black'
             }`}
           >
@@ -106,7 +107,7 @@ export default function AdminReportsPage() {
           <button
             type="button"
             onClick={() => setTimeframe('all')}
-            className={`px-3 py-1.5 rounded-md font-semibold transition ${
+            className={`px-3 py-1.5 rounded-md font-semibold transition text-sm ${
               timeframe === 'all' ? 'bg-[#2f3e10] text-white' : 'text-stone-600 hover:text-black'
             }`}
           >
@@ -122,7 +123,7 @@ export default function AdminReportsPage() {
           <h3 className="text-2xl font-bold font-heading text-stone-900 mt-1">
             {formatPrice(safeMetrics.totalSales)}
           </h3>
-          <p className="text-[11px] text-emerald-600 font-semibold mt-1">↑ 18.4% from last period</p>
+          <p className="text-xs text-emerald-600 font-semibold mt-1">↑ 18.4% from last period</p>
         </div>
 
         <div className="bg-white border border-[#e5e5e5] rounded-xl p-5 shadow-xs">
@@ -130,7 +131,7 @@ export default function AdminReportsPage() {
           <h3 className="text-2xl font-bold font-heading text-stone-900 mt-1">
             {formatPrice(safeMetrics.totalOrders > 0 ? safeMetrics.totalSales / safeMetrics.totalOrders : 0)}
           </h3>
-          <p className="text-[11px] text-stone-500 mt-1">Based on {safeMetrics.totalOrders} total orders</p>
+          <p className="text-xs text-stone-500 mt-1">Based on {safeMetrics.totalOrders} total orders</p>
         </div>
 
         <div className="bg-white border border-[#e5e5e5] rounded-xl p-5 shadow-xs">
@@ -142,7 +143,7 @@ export default function AdminReportsPage() {
                 )}%`
               : '0%'}
           </h3>
-          <p className="text-[11px] text-blue-600 font-semibold mt-1">
+          <p className="text-xs text-blue-600 font-semibold mt-1">
             {orders.filter((o) => o.orderStatus === 'Delivered').length} / {metrics.totalOrders} completed
           </p>
         </div>
@@ -152,15 +153,15 @@ export default function AdminReportsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Best Selling Products */}
         <div className="lg:col-span-8 bg-white border border-[#e5e5e5] rounded-xl p-6 shadow-xs">
-          <h2 className="text-base font-heading font-semibold text-stone-900 mb-1">
+          <h2 className="text-lg font-heading font-semibold text-stone-900 mb-1">
             Top Performing Products by Revenue
           </h2>
-          <p className="text-xs text-stone-500 mb-5">Ranked by actual fulfilled volume and sales value</p>
+          <p className="text-sm text-stone-500 mb-5">Ranked by actual fulfilled volume and sales value</p>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-stone-200 text-stone-400 uppercase tracking-wider font-semibold">
+                <tr className="border-b border-stone-200 text-stone-500 uppercase tracking-wider font-semibold text-xs">
                   <th className="py-2.5">Product</th>
                   <th className="py-2.5 text-center">Units Sold</th>
                   <th className="py-2.5 text-right">Revenue</th>
@@ -169,7 +170,7 @@ export default function AdminReportsPage() {
               <tbody className="divide-y divide-stone-100">
                 {productSales.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="py-6 text-center text-stone-400">
+                    <td colSpan="3" className="py-6 text-center text-stone-400 text-sm">
                       No product sales recorded yet.
                     </td>
                   </tr>
@@ -183,16 +184,16 @@ export default function AdminReportsPage() {
                             <img
                               src={ps.image}
                               alt={ps.title}
-                              className="w-9 h-9 object-cover rounded border border-stone-200 shrink-0"
+                              className="w-10 h-10 object-cover rounded border border-stone-200 shrink-0"
                             />
                           )}
-                          <span className="font-semibold text-stone-900 line-clamp-1">{ps.title}</span>
+                          <span className="font-semibold text-stone-900 line-clamp-1 text-sm">{ps.title}</span>
                         </div>
                       </td>
-                      <td className="py-3 text-center font-semibold text-stone-700">
+                      <td className="py-3 text-center font-semibold text-stone-700 text-sm">
                         {ps.units} units
                       </td>
-                      <td className="py-3 text-right font-bold text-stone-900">
+                      <td className="py-3 text-right font-bold text-stone-900 text-sm">
                         {formatPrice(ps.revenue)}
                       </td>
                     </tr>
@@ -206,13 +207,13 @@ export default function AdminReportsPage() {
         {/* Payment Channels Breakdown */}
         <div className="lg:col-span-4 bg-white border border-[#e5e5e5] rounded-xl p-6 shadow-xs space-y-5">
           <div>
-            <h2 className="text-base font-heading font-semibold text-stone-900 mb-1">
+            <h2 className="text-lg font-heading font-semibold text-stone-900 mb-1">
               Payment Methods
             </h2>
-            <p className="text-xs text-stone-500">Distribution between Prepaid & COD</p>
+            <p className="text-sm text-stone-500">Distribution between Prepaid & COD</p>
           </div>
 
-          <div className="space-y-4 text-xs">
+          <div className="space-y-4 text-sm">
             {/* Razorpay Prepaid */}
             <div>
               <div className="flex justify-between font-semibold text-stone-800 mb-1">
@@ -254,7 +255,7 @@ export default function AdminReportsPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-stone-100 text-[11px] text-stone-500 space-y-1">
+          <div className="pt-4 border-t border-stone-100 text-xs text-stone-500 space-y-1">
             <p className="font-semibold text-stone-700">Report Summary:</p>
             <p>• {orders.length} total transaction logs indexed</p>
             <p>• Active catalog: {products.length} formulations</p>

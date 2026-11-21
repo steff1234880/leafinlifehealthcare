@@ -1,9 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../context/StoreContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MobileToolbar() {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const { wishlistCount, setIsLoginOpen } = useStore();
+
+  const handleProfileClick = () => {
+    if (isAuthenticated) {
+      navigate('/account');
+    } else {
+      setIsLoginOpen(true);
+    }
+  };
 
   return (
     <div className="sticky bottom-0 left-0 right-0 z-20 w-full bg-white shadow-[0_0_10px_#1a1a1a26] flex md:hidden justify-center">
@@ -121,11 +132,14 @@ export default function MobileToolbar() {
           </span>
         </Link>
 
-        {/* Log in */}
+        {/* Account / Profile */}
         <button
           type="button"
-          onClick={() => setIsLoginOpen(true)}
-          className="flex flex-col items-center justify-center py-[14px] text-black hover:text-[#2f3e10] bg-transparent border-0 cursor-pointer"
+          onClick={handleProfileClick}
+          aria-label={isAuthenticated ? 'My Profile' : 'Log in'}
+          className={`flex flex-col items-center justify-center py-[14px] bg-transparent border-0 cursor-pointer ${
+            isAuthenticated ? 'text-[#729855] hover:text-[#2f3e10]' : 'text-black hover:text-[#2f3e10]'
+          }`}
         >
           <svg
             width="16"
@@ -150,8 +164,8 @@ export default function MobileToolbar() {
               strokeLinejoin="round"
             />
           </svg>
-          <span className="text-[14px] leading-[14px] font-normal mt-[7px] capitalize">
-            Log in
+          <span className="text-[14px] leading-[14px] font-normal mt-[7px] capitalize truncate max-w-[65px]">
+            {isAuthenticated ? 'Profile' : 'Log in'}
           </span>
         </button>
       </div>

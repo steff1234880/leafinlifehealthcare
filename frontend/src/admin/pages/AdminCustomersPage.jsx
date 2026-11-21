@@ -20,12 +20,12 @@ export default function AdminCustomersPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans text-sm">
       <div>
         <h1 className="text-2xl font-heading font-bold text-stone-900">
           Customer Management ({customers.length})
         </h1>
-        <p className="text-xs text-stone-500 mt-1">
+        <p className="text-sm text-stone-500 mt-1">
           View customer profiles, purchase frequency, lifetime values and contact info
         </p>
       </div>
@@ -37,7 +37,7 @@ export default function AdminCustomersPage() {
             placeholder="Search customers by name, email or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 text-xs border border-stone-300 rounded focus:outline-none focus:border-[#586c38]"
+            className="w-full h-10 pl-9 pr-3 text-sm border border-stone-300 rounded focus:outline-none focus:border-[#586c38]"
           />
           <svg className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -45,10 +45,10 @@ export default function AdminCustomersPage() {
         </div>
       </div>
 
-      <div className="bg-white border border-[#e5e5e5] rounded-xl shadow-xs overflow-hidden">
-        <table className="w-full text-left text-xs">
+      <div className="bg-white border border-[#e5e5e5] rounded-xl shadow-xs overflow-x-auto">
+        <table className="w-full text-left text-sm">
           <thead>
-            <tr className="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase tracking-wider font-semibold">
+            <tr className="bg-stone-50 border-b border-stone-200 text-stone-600 uppercase tracking-wider font-semibold text-xs">
               <th className="py-3 px-4">Customer</th>
               <th className="py-3 px-4">Contact</th>
               <th className="py-3 px-4">Location</th>
@@ -60,32 +60,32 @@ export default function AdminCustomersPage() {
           <tbody className="divide-y divide-stone-100">
             {filtered.map((c) => (
               <tr key={c.id} className="hover:bg-stone-50/70 transition-colors">
-                <td className="py-3 px-4">
+                <td className="py-3.5 px-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-[#fef9ea] border border-[#586c38]/30 text-[#2f3e10] flex items-center justify-center font-bold text-xs">
+                    <div className="w-9 h-9 rounded-full bg-[#fef9ea] border border-[#586c38]/30 text-[#2f3e10] flex items-center justify-center font-bold text-sm">
                       {c.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-stone-900">{c.name}</p>
-                      <p className="text-[11px] text-stone-400">{c.email}</p>
+                      <p className="font-semibold text-stone-900 text-sm">{c.name}</p>
+                      <p className="text-xs text-stone-400">{c.email}</p>
                     </div>
                   </div>
                 </td>
-                <td className="py-3 px-4 font-mono text-stone-700">
+                <td className="py-3.5 px-4 font-mono text-stone-700 text-sm">
                   {c.phone}
                 </td>
-                <td className="py-3 px-4 text-stone-600">
+                <td className="py-3.5 px-4 text-stone-600 text-sm">
                   {c.city}
                 </td>
-                <td className="py-3 px-4">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-stone-100 font-semibold text-stone-700">
-                    {c.totalOrders} order(s)
+                <td className="py-3.5 px-4">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-stone-100 font-semibold text-stone-700 text-xs">
+                    {c.totalOrders} {c.totalOrders === 1 ? 'order' : 'orders'}
                   </span>
                 </td>
-                <td className="py-3 px-4 font-bold text-stone-900">
+                <td className="py-3.5 px-4 font-bold text-stone-900 text-sm">
                   {formatPrice(c.totalSpent)}
                 </td>
-                <td className="py-3 px-4 text-stone-500">
+                <td className="py-3.5 px-4 text-stone-500 text-sm">
                   {c.joinedAt}
                 </td>
               </tr>
