@@ -146,7 +146,16 @@ export async function createPaymentOrder(req, res) {
         },
       });
     } catch (rzpErr) {
-      console.warn('Razorpay API direct call offline fallback:', rzpErr.message);
+      if (process.env.NODE_ENV === 'production') {
+        console.error('[Razorpay Error] Failed to create order in production:', rzpErr);
+        return res.status(502).json({
+          success: false,
+          message: 'Payment gateway communication failed. Please try again or contact support.',
+          error: rzpErr.error?.description || rzpErr.message || 'Gateway error',
+        });
+      }
+
+      console.warn('Razorpay API direct call offline fallback (development only):', rzpErr.message);
       rzpOrder = {
         id: `order_${crypto.randomBytes(10).toString('hex')}`,
         entity: 'order',

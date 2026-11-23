@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
-import { orderService, paymentService } from '../services/api';
+import { orderService, paymentService, cartService } from '../services/api';
 
 // Supported Indian states for shipping and billing dropdowns
 const INDIAN_STATES = [

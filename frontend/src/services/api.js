@@ -254,6 +254,11 @@ export const paymentService = {
     const { data } = await apiClient.post('/payment/failure', failureData);
     return data;
   },
+
+  reportFailure: async (failureData) => {
+    const { data } = await apiClient.post('/payment/failure', failureData);
+    return data;
+  },
 };
 
 /**

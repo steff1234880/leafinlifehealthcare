@@ -3,14 +3,13 @@ import Razorpay from 'razorpay';
 
 dotenv.config();
 
-const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_test_leafinlife123';
-const key_secret = process.env.RAZORPAY_KEY_SECRET || 'leafinlife_test_secret_9988';
-const webhook_secret = process.env.RAZORPAY_WEBHOOK_SECRET || 'leafinlife_webhook_secret_9988';
+const key_id = process.env.RAZORPAY_KEY_ID || '';
+const key_secret = process.env.RAZORPAY_KEY_SECRET || '';
+const webhook_secret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 
-export const razorpayInstance = new Razorpay({
-  key_id,
-  key_secret,
-});
+export const razorpayInstance = key_id && key_secret
+  ? new Razorpay({ key_id, key_secret })
+  : new Razorpay({ key_id: 'rzp_placeholder', key_secret: 'placeholder_secret' });
 
 export const RAZORPAY_CONFIG = {
   keyId: key_id,
